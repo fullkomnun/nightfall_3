@@ -5,7 +5,7 @@ on:
     branches: [master]
 
 env:
-# Whitelisting is disabled during testing for backwards compatibility with these tests.  It must not be disabled in production.
+  # Whitelisting is disabled during testing for backwards compatibility with these tests.  It must not be disabled in production.
   WHITELISTING: disable
 
 jobs:
@@ -98,6 +98,7 @@ jobs:
 
   circuits-test:
     env:
+      DOCKER_BUILDKIT: 1
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
@@ -155,6 +156,7 @@ jobs:
 
   ganache-protocol-test:
     env:
+      DOCKER_BUILDKIT: 1
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04

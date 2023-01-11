@@ -1,5 +1,5 @@
 # build circom from source for local verify
-FROM ghcr.io/eyblockchain/local-circom as builder
+FROM ghcr.io/fullkomnun/local-circom as builder
 
 FROM node:16.17-bullseye-slim
 

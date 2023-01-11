@@ -1,15 +1,11 @@
-FROM node:16.17
+FROM node:16.17-bullseye-slim
 
-# install node
-RUN apt-get update
-# TEMPORARY WORKAROUND FOR ISSUE https://github.com/nodesource/distributions/issues/1266
-RUN apt-get install -y ca-certificates
-RUN apt-get install -y curl
-RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
-RUN apt-get install -y nodejs gcc g++ make
-RUN apt-get install -y netcat
-# installs libs required for zokrates
-RUN apt-get install -y libgmpxx4ldbl libgmp3-dev
+# 'node-gyp' requires 'python3', 'make' and 'g++''
+# entrypoint script requires 'netcat'
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    python3 make g++ netcat \
+    && rm -rf /var/lib/apt/lists/*
 
 ARG OPTIMIST_PORT=80
 ARG OPTIMIST_WS_PORT=8080
@@ -30,11 +26,10 @@ RUN npm link
 
 WORKDIR /app
 RUN mkdir /app/mongodb
-COPY nightfall-optimist/src src
 COPY nightfall-optimist/docker-entrypoint.standalone.sh ./docker-entrypoint.sh
 COPY nightfall-optimist/package*.json  ./
-
-RUN npm ci
+RUN npm ci && npm cache clean --force
+COPY nightfall-optimist/src src
 
 COPY common-files/classes node_modules/@polygon-nightfall/common-files/classes
 COPY common-files/utils node_modules/@polygon-nightfall/common-files/utils

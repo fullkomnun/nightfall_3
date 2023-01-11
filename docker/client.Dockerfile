@@ -1,7 +1,11 @@
-FROM node:16.17
+FROM node:16.17-bullseye-slim
 
-RUN apt-get update -y
-RUN apt-get install -y netcat
+# 'node-gyp' requires 'python3', 'make' and 'g++''
+# entrypoint script requires 'netcat'
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    python3 make g++ netcat \
+    && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 80 9229
 
@@ -17,10 +21,9 @@ RUN npm link
 
 WORKDIR /app
 
-COPY nightfall-client/src src
 COPY nightfall-client/docker-entrypoint.sh nightfall-client/package.json nightfall-client/package-lock.json ./
-
-RUN npm ci
+RUN npm ci && npm cache clean --force
+COPY nightfall-client/src src
 
 COPY common-files/classes node_modules/@polygon-nightfall/common-files/classes
 COPY common-files/utils node_modules/@polygon-nightfall/common-files/utils

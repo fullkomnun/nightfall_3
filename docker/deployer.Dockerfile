@@ -1,7 +1,11 @@
-FROM node:16.17
+FROM node:16.17-bullseye-slim
 
-RUN apt-get update -y
-RUN apt-get install -y netcat-openbsd
+# 'node-gyp' requires 'python3', 'make' and 'g++''
+# entrypoint script requires 'netcat'
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    python3 make g++ netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 
@@ -10,7 +14,7 @@ COPY common-files common-files
 COPY config/default.js app/config/default.js
 
 WORKDIR /common-files
-RUN npm ci
+RUN npm ci --only=production
 RUN npm link
 
 WORKDIR /app
@@ -22,7 +26,7 @@ COPY nightfall-deployer/truffle-config.js truffle-config.js
 COPY nightfall-deployer/circuits circuits
 COPY nightfall-deployer/entrypoint.sh entrypoint.sh
 
-RUN npm ci
+RUN npm ci && npm cache clean --force
 
 COPY common-files/classes node_modules/@polygon-nightfall/common-files/classes
 COPY common-files/utils node_modules/@polygon-nightfall/common-files/utils

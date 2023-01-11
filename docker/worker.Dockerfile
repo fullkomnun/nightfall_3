@@ -1,12 +1,14 @@
 # build circom from source for local verify
 FROM ghcr.io/eyblockchain/local-circom as builder
 
-FROM ubuntu:20.04
+FROM node:16.17-bullseye-slim
 
-RUN apt-get update -y
-RUN apt-get install -y netcat curl
-RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
-RUN apt-get install -y nodejs gcc g++ make
+# 'node-gyp' requires 'python3', 'make' and 'g++''
+# entrypoint script requires 'netcat'
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    python3 make g++ netcat \
+    && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 80
 
@@ -23,11 +25,10 @@ COPY config/default.js config/default.js
 COPY /nightfall-deployer/circuits circuits
 COPY --from=builder /app/circom/target/release/circom /app/circom
 COPY ./worker/package.json ./worker/package-lock.json ./
-COPY ./worker/src ./src
 COPY ./worker/start-script ./start-script
 COPY ./worker/start-dev ./start-dev
-
-RUN npm ci
+RUN npm ci && npm cache clean --force
+COPY ./worker/src ./src
 
 COPY common-files/classes node_modules/@polygon-nightfall/common-files/classes
 COPY common-files/utils node_modules/@polygon-nightfall/common-files/utils

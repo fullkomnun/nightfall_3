@@ -7,7 +7,7 @@ FROM node:16.17-bullseye-slim
 # entrypoint script requires 'netcat'
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-    python3 make g++ netcat \
+    python3 make g++ netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 80

@@ -13,6 +13,11 @@ NO_CACHE_FLAG=
 #   NO_CACHE_FLAG='--no-cache'
 # fi
 
+BUILDKIT=
+if [[ -n "$DOCKER_BUILDKIT" ]]; then 
+  BUILDKIT='buildx'
+fi
+
 BUILDKIT_CACHING=()
 if [[ -n "$GITHUB_ACTIONS" ]]; then 
   export ACTIONS_CACHE_URL=$(echo "$ACTIONS_ID_TOKEN_REQUEST_URL" | grep -Po 'https://[^/]+/[^/]+/' | sed  's/pipelines/artifactcache/')
@@ -20,34 +25,34 @@ if [[ -n "$GITHUB_ACTIONS" ]]; then
   BUILDKIT_CACHING=(--load --cache-to "type=gha,mode=max" --cache-from type=gha)
 fi
 
-#docker build "${NO_CACHE_FLAG}" -t ghcr.io/fullkomnun/local-circom "${BUILDKIT_CACHING[@]}" - < docker/circom.Dockerfile
+#docker "${BUILDKIT}" build "${NO_CACHE_FLAG}" -t ghcr.io/fullkomnun/local-circom "${BUILDKIT_CACHING[@]}" - < docker/circom.Dockerfile
 
 # containers built separately. A parallel build fails.
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"administrator"* ]]; then
-  docker build "${NO_CACHE_FLAG}" -t ghcr.io/fullkomnun/nightfall3-administrator -f docker/admin.Dockerfile . "${BUILDKIT_CACHING[@]}"
+  docker "${BUILDKIT}" build "${NO_CACHE_FLAG}" -t ghcr.io/fullkomnun/nightfall3-administrator -f docker/admin.Dockerfile . "${BUILDKIT_CACHING[@]}"
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"client"* || "${NF_SERVICES_TO_START}" == *"adversary"* ]]; then
-  docker build "${NO_CACHE_FLAG}" -t ghcr.io/fullkomnun/nightfall3-client -f docker/client.Dockerfile . "${BUILDKIT_CACHING[@]}"
+  docker "${BUILDKIT}" build "${NO_CACHE_FLAG}" -t ghcr.io/fullkomnun/nightfall3-client -f docker/client.Dockerfile . "${BUILDKIT_CACHING[@]}"
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"deployer"* ]]; then
-  docker build "${NO_CACHE_FLAG}" -t ghcr.io/fullkomnun/nightfall3-deployer -f docker/deployer.Dockerfile . "${BUILDKIT_CACHING[@]}"
+  docker "${BUILDKIT}" build "${NO_CACHE_FLAG}" -t ghcr.io/fullkomnun/nightfall3-deployer -f docker/deployer.Dockerfile . "${BUILDKIT_CACHING[@]}"
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"hosted-utils-api-server"* ]]; then
-  docker build "${NO_CACHE_FLAG}" -t ghcr.io/fullkomnun/nightfall3-hosted-utils-api-server "${BUILDKIT_CACHING[@]}" - < hosted-utils-api-server.Dockerfile
+  docker "${BUILDKIT}" build "${NO_CACHE_FLAG}" -t ghcr.io/fullkomnun/nightfall3-hosted-utils-api-server "${BUILDKIT_CACHING[@]}" - < hosted-utils-api-server.Dockerfile
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"optimist"* || "${NF_SERVICES_TO_START}" == *"adversary"* ]]; then
-  docker build "${NO_CACHE_FLAG}" -t ghcr.io/fullkomnun/nightfall3-optimist -f docker/optimist.Dockerfile . "${BUILDKIT_CACHING[@]}"
+  docker "${BUILDKIT}" build "${NO_CACHE_FLAG}" -t ghcr.io/fullkomnun/nightfall3-optimist -f docker/optimist.Dockerfile . "${BUILDKIT_CACHING[@]}"
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"proposer"* ]]; then
-  docker build "${NO_CACHE_FLAG}" -t ghcr.io/fullkomnun/nightfall3-proposer -f docker/proposer.Dockerfile . "${BUILDKIT_CACHING[@]}"
+  docker "${BUILDKIT}" build "${NO_CACHE_FLAG}" -t ghcr.io/fullkomnun/nightfall3-proposer -f docker/proposer.Dockerfile . "${BUILDKIT_CACHING[@]}"
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"worker"* ]]; then
-  docker build "${NO_CACHE_FLAG}" -t ghcr.io/fullkomnun/nightfall3-worker -f docker/worker.Dockerfile . "${BUILDKIT_CACHING[@]}"
+  docker "${BUILDKIT}" build "${NO_CACHE_FLAG}" -t ghcr.io/fullkomnun/nightfall3-worker -f docker/worker.Dockerfile . "${BUILDKIT_CACHING[@]}"
 fi

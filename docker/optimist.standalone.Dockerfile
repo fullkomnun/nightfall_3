@@ -21,14 +21,14 @@ COPY common-files common-files
 COPY config/default.js app/config/default.js
 
 WORKDIR /common-files
-RUN npm ci
+RUN npm ci --only=production --no-audit
 RUN npm link
 
 WORKDIR /app
 RUN mkdir /app/mongodb
 COPY nightfall-optimist/docker-entrypoint.standalone.sh ./docker-entrypoint.sh
 COPY nightfall-optimist/package*.json  ./
-RUN npm ci && npm cache clean --force
+RUN npm ci --no-audit && npm cache clean --force
 COPY nightfall-optimist/src src
 
 COPY common-files/classes node_modules/@polygon-nightfall/common-files/classes

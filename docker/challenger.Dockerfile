@@ -16,17 +16,17 @@ WORKDIR /app
 COPY common-files common-files
 COPY cli cli
 WORKDIR /app/common-files
-RUN npm ci
+RUN npm ci --only=production --no-audit
 RUN npm link
 
 WORKDIR /app/cli
-RUN npm ci
+RUN npm ci --only=production --no-audit
 
 WORKDIR /app
 COPY apps/challenger/package*.json ./
 COPY apps/challenger/docker-entrypoint.sh docker-entrypoint.sh
 COPY config config
-RUN npm ci && npm cache clean --force
+RUN npm ci --no-audit && npm cache clean --force
 COPY apps/challenger/src src
 
 COPY common-files/classes node_modules/@polygon-nightfall/common-files/classes

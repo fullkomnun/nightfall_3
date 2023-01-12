@@ -14,17 +14,17 @@ COPY common-files common-files
 COPY cli cli
 
 WORKDIR /app/common-files
-RUN npm ci
+RUN npm ci --only=production --no-audit
 RUN npm link
 
 
 WORKDIR /app/cli
-RUN npm ci
+RUN npm ci --only=production --no-audit
 
 WORKDIR /app/admin
 COPY config/default.js config/default.js
 COPY nightfall-administrator/docker-entrypoint.sh nightfall-administrator/package*.json nightfall-administrator/admin ./
-RUN npm ci && npm cache clean --force
+RUN npm ci --no-audit && npm cache clean --force
 COPY nightfall-administrator/src src
 
 COPY common-files/classes node_modules/@polygon-nightfall/common-files/classes

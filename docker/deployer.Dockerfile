@@ -14,7 +14,7 @@ COPY common-files common-files
 COPY config/default.js app/config/default.js
 
 WORKDIR /common-files
-RUN npm ci --only=production
+RUN npm ci --only=production --no-audit
 RUN npm link
 
 WORKDIR /app
@@ -26,7 +26,7 @@ COPY nightfall-deployer/truffle-config.js truffle-config.js
 COPY nightfall-deployer/circuits circuits
 COPY nightfall-deployer/entrypoint.sh entrypoint.sh
 
-RUN npm ci && npm cache clean --force
+RUN npm ci --no-audit && npm cache clean --force
 
 COPY common-files/classes node_modules/@polygon-nightfall/common-files/classes
 COPY common-files/utils node_modules/@polygon-nightfall/common-files/utils

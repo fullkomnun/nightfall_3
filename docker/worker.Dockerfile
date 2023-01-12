@@ -17,7 +17,7 @@ ENV CIRCOM_HOME /app
 WORKDIR /
 COPY common-files common-files
 WORKDIR /common-files
-RUN npm ci
+RUN npm ci --only=production --no-audit
 RUN npm link
 
 WORKDIR /app
@@ -27,7 +27,7 @@ COPY --from=builder /app/circom/target/release/circom /app/circom
 COPY ./worker/package.json ./worker/package-lock.json ./
 COPY ./worker/start-script ./start-script
 COPY ./worker/start-dev ./start-dev
-RUN npm ci && npm cache clean --force
+RUN npm ci --no-audit && npm cache clean --force
 COPY ./worker/src ./src
 
 COPY common-files/classes node_modules/@polygon-nightfall/common-files/classes

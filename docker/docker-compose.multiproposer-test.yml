@@ -3,7 +3,7 @@ version: '3.5'
 services:
   # Temporary container to deploy contracts and circuits and populate volumes
   deployer:
-    image: ghcr.io/eyblockchain/nightfall3-deployer:latest
+    image: ghcr.io/fullkomnun/nightfall3-deployer:latest
     build:
       dockerfile: docker/deployer.Dockerfile
       context: ..
@@ -67,7 +67,7 @@ services:
         target: /app/public/
 
   worker:
-    image: ghcr.io/eyblockchain/nightfall3-worker:latest
+    image: ghcr.io/fullkomnun/nightfall3-worker:latest
     build:
       dockerfile: docker/worker.Dockerfile
       context: ..

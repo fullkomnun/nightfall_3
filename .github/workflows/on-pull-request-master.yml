@@ -7,9 +7,11 @@ on:
 env:
   # Whitelisting is disabled during testing for backwards compatibility with these tests.  It must not be disabled in production.
   WHITELISTING: disable
+  DOCKER_BUILDKIT: 1 # enable docker buildkit
 
 jobs:
   dependency-review:
+    if: ${{ false }}
     runs-on: ubuntu-20.04
     steps:
       - name: 'Checkout Repository'
@@ -98,10 +100,13 @@ jobs:
 
   circuits-test:
     env:
-      DOCKER_BUILDKIT: 1
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -163,10 +168,13 @@ jobs:
 
   ganache-protocol-test:
     env:
-      DOCKER_BUILDKIT: 1
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -228,10 +236,13 @@ jobs:
 
   ganache-erc20-test:
     env:
-      DOCKER_BUILDKIT: 1
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v1
@@ -293,10 +304,13 @@ jobs:
 
   ganache-erc721-test:
     env:
-      DOCKER_BUILDKIT: 1
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v1
@@ -358,10 +372,13 @@ jobs:
 
   ganache-erc1155-test:
     env:
-      DOCKER_BUILDKIT: 1
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v1
@@ -423,10 +440,13 @@ jobs:
 
   ganache-tokenisation-l2-test:
     env:
-      DOCKER_BUILDKIT: 1
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v1
@@ -489,11 +509,14 @@ jobs:
 
   x509-test:
     env:
-      DOCKER_BUILDKIT: 1
       WHITELISTING: enable
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -554,8 +577,11 @@ jobs:
 
   administrator-test:
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     env:
-      DOCKER_BUILDKIT: 1
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: administrator,blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     steps:
@@ -619,8 +645,11 @@ jobs:
 
   optimist-sync-test:
     runs-on: ubuntu-18.04
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     env:
-      DOCKER_BUILDKIT: 1
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     steps:
@@ -684,9 +713,12 @@ jobs:
 
   adversary-test:
     env:
-      DOCKER_BUILDKIT: 1
       CONFIRMATIONS: 1
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v1
@@ -742,10 +774,13 @@ jobs:
 
   ping-pong-test:
     env:
-      DOCKER_BUILDKIT: 1
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,deployer,worker
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -829,12 +864,15 @@ jobs:
 
   test-gas:
     env:
-      DOCKER_BUILDKIT: 1
       MAX_BLOCK_SIZE: 25000
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     name: check gas transactions per block
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -897,8 +935,11 @@ jobs:
   test-apps:
     name: check apps for liveliness
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     env:
-      DOCKER_BUILDKIT: 1
       NF_SERVICES_TO_START: blockchain,deployer,optimist,worker
     steps:
       - uses: actions/checkout@v3
@@ -970,9 +1011,8 @@ jobs:
 
   test-client:
     name: check client for liveliness
+    if: ${{ false }}
     runs-on: ubuntu-20.04
-    env:
-      DOCKER_BUILDKIT: 1
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v1

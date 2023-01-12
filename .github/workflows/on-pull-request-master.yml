@@ -43,10 +43,10 @@ jobs:
           node-version: '16.17.0'
       - name: General Tests
         run: |
-          npm ci
+          npm ci --no-audit
           npm run test-general-stuff
           cd common-files
-          npm ci
+          npm ci --no-audit
           npm run test
 
   unit-tests:
@@ -58,9 +58,9 @@ jobs:
           node-version: '16.17.0'
       - name: Unit Tests
         run: |
-          npm ci
+          npm ci --no-audit
           cd common-files
-          npm ci
+          npm ci --no-audit
           cd ../
           npm run unit-test
           MODULUS=$(cat test/_certificates/root_ca.pub_key.modulus) \
@@ -90,11 +90,11 @@ jobs:
 
       - name: Unit Circuit Tests
         run: |
-          npm ci
+          npm ci --no-audit
           cd common-files
-          npm ci
+          npm ci --no-audit
           cd ../nightfall-deployer
-          npm ci
+          npm ci --no-audit
           cd ../
           npm run unit-test-circuits
 
@@ -461,7 +461,7 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
+          npm ci --no-audit
           cd ..
 
       - name: Login to GitHub Container Registry
@@ -842,7 +842,7 @@ jobs:
 
       - name: Run ping-pong test
         run: |
-          npm ci
+          npm ci --no-audit
           docker wait nightfall_3_deployer_1
           npm run ping-pong
 

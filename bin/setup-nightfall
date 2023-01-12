@@ -43,7 +43,7 @@ if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"deployer"* 
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"hosted-utils-api-server"* ]]; then
-  docker $BUILDKIT build $NO_CACHE_FLAG "${BUILDKIT_CACHING[@]}" -t ghcr.io/fullkomnun/nightfall3-hosted-utils-api-server - < docker/hosted-utils-api-server.Dockerfile
+  docker $BUILDKIT build $NO_CACHE_FLAG "${BUILDKIT_CACHING[@]}" -t ghcr.io/fullkomnun/nightfall3-hosted-utils-api-server -f docker/hosted-utils-api-server.Dockerfile ./hosted-utils-api-server
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"optimist"* || "${NF_SERVICES_TO_START}" == *"adversary"* ]]; then

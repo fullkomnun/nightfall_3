@@ -75,6 +75,7 @@ services:
       CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST:-worker}
       UPGRADE: ${UPGRADE_CONTRACTS}
       ALWAYS_DO_TRUSTED_SETUP: ${ALWAYS_DO_TRUSTED_SETUP}
+      TEST_SANCTIONS_CONTRACT: 'mock'
 
   hosted-utils-api-server:
     build:

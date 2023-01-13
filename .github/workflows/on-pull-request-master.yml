@@ -166,848 +166,848 @@ jobs:
           name: circuit-test-logs
           path: ./circuit-test.log
 
-  ganache-protocol-test:
-    env:
-      CONFIRMATIONS: 1
-      NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
-    runs-on: ubuntu-20.04
-    permissions:
-      id-token: write # for docker gha cache
-      contents: read
-      packages: read
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '16.17.0'
-
-      - name: Perform npm link
-        run: |
-          cd common-files
-          npm link
-          cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Start Containers
-        run: |
-          ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ganache-test.log &disown
-
-      - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
-        with:
-          command: |
-            docker wait nightfall_3_deployer_1
-          attempt_limit: 100
-          attempt_delay: 20000
-
-      - name: Debug logs - after image builds
-        if: always()
-        run: cat ganache-test.log
-
-      - name: Run integration test
-        run: |
-          npm run test-e2e-protocol
-
-      - name: Debug logs - after integration test run
-        if: always()
-        run: cat ganache-test.log
-
-      - name: If integration test failed, shutdown the Containers
-        if: failure()
-        run: npm run nightfall-down
-
-      - name: If integration test failed, upload logs files as artifacts
-        if: failure()
-        uses: actions/upload-artifact@master
-        with:
-          name: ganache-test-logs
-          path: ./ganache-test.log
-
-  ganache-erc20-test:
-    env:
-      CONFIRMATIONS: 1
-      NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
-    runs-on: ubuntu-20.04
-    permissions:
-      id-token: write # for docker gha cache
-      contents: read
-      packages: read
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '16.17.0'
-
-      - name: Perform npm link
-        run: |
-          cd common-files
-          npm link
-          cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Start Containers
-        run: |
-          ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ganache-test.log &disown
-
-      - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
-        with:
-          command: |
-            docker wait nightfall_3_deployer_1
-          attempt_limit: 100
-          attempt_delay: 20000
-
-      - name: Debug logs - after image builds
-        if: always()
-        run: cat ganache-test.log
-
-      - name: Run integration test
-        run: |
-          npm run test-erc20-tokens
-
-      - name: Debug logs - after integration test run
-        if: always()
-        run: cat ganache-test.log
-
-      - name: If integration test failed, shutdown the Containers
-        if: failure()
-        run: npm run nightfall-down
-
-      - name: If integration test failed, upload logs files as artifacts
-        if: failure()
-        uses: actions/upload-artifact@master
-        with:
-          name: ganache-test-logs
-          path: ./ganache-test.log
-
-  ganache-erc721-test:
-    env:
-      CONFIRMATIONS: 1
-      NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
-    runs-on: ubuntu-20.04
-    permissions:
-      id-token: write # for docker gha cache
-      contents: read
-      packages: read
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '16.17.0'
-
-      - name: Perform npm link
-        run: |
-          cd common-files
-          npm link
-          cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Start Containers
-        run: |
-          ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ganache-test.log &disown
-
-      - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
-        with:
-          command: |
-            docker wait nightfall_3_deployer_1
-          attempt_limit: 100
-          attempt_delay: 20000
-
-      - name: Debug logs - after image builds
-        if: always()
-        run: cat ganache-test.log
-
-      - name: Run integration test
-        run: |
-          npm run test-erc721-tokens
-
-      - name: Debug logs - after integration test run
-        if: always()
-        run: cat ganache-test.log
-
-      - name: If integration test failed, shutdown the Containers
-        if: failure()
-        run: npm run nightfall-down
-
-      - name: If integration test failed, upload logs files as artifacts
-        if: failure()
-        uses: actions/upload-artifact@master
-        with:
-          name: ganache-test-logs
-          path: ./ganache-test.log
-
-  ganache-erc1155-test:
-    env:
-      CONFIRMATIONS: 1
-      NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
-    runs-on: ubuntu-20.04
-    permissions:
-      id-token: write # for docker gha cache
-      contents: read
-      packages: read
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '16.17.0'
-
-      - name: Perform npm link
-        run: |
-          cd common-files
-          npm link
-          cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Start Containers
-        run: |
-          ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ganache-test.log &disown
-
-      - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
-        with:
-          command: |
-            docker wait nightfall_3_deployer_1
-          attempt_limit: 100
-          attempt_delay: 20000
-
-      - name: Debug logs - after image builds
-        if: always()
-        run: cat ganache-test.log
-
-      - name: Run integration test
-        run: |
-          npm run test-erc1155-tokens
-
-      - name: Debug logs - after integration test run
-        if: always()
-        run: cat ganache-test.log
-
-      - name: If integration test failed, shutdown the Containers
-        if: failure()
-        run: npm run nightfall-down
-
-      - name: If integration test failed, upload logs files as artifacts
-        if: failure()
-        uses: actions/upload-artifact@master
-        with:
-          name: ganache-test-logs
-          path: ./ganache-test.log
-
-  ganache-tokenisation-l2-test:
-    env:
-      CONFIRMATIONS: 1
-      NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
-    runs-on: ubuntu-20.04
-    permissions:
-      id-token: write # for docker gha cache
-      contents: read
-      packages: read
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '16.17.0'
-
-      - name: Perform npm link
-        run: |
-          cd common-files
-          npm link
-          cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          npm ci --no-audit
-          cd ..
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Start Containers
-        run: |
-          ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ganache-test.log &disown
-
-      - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
-        with:
-          command: |
-            docker wait nightfall_3_deployer_1
-          attempt_limit: 100
-          attempt_delay: 20000
-
-      - name: Debug logs - after image builds
-        if: always()
-        run: cat ganache-test.log
-
-      - name: Run integration test
-        run: |
-          npm run test-l2tokenisation
-
-      - name: Debug logs - after integration test run
-        if: always()
-        run: cat ganache-test.log
-
-      - name: If integration test failed, shutdown the Containers
-        if: failure()
-        run: npm run nightfall-down
-
-      - name: If integration test failed, upload logs files as artifacts
-        if: failure()
-        uses: actions/upload-artifact@master
-        with:
-          name: ganache-test-logs
-          path: ./ganache-test.log
-
-  x509-test:
-    env:
-      WHITELISTING: enable
-      CONFIRMATIONS: 1
-      NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
-    runs-on: ubuntu-20.04
-    permissions:
-      id-token: write # for docker gha cache
-      contents: read
-      packages: read
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '16.17.0'
-
-      - name: Perform npm link
-        run: |
-          cd common-files
-          npm link
-          cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Start Containers
-        run: |
-          ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> x509-test.log &disown
-
-      - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
-        with:
-          command: |
-            docker wait nightfall_3_deployer_1
-          attempt_limit: 100
-          attempt_delay: 20000
-
-      - name: Debug logs - after image builds
-        if: always()
-        run: cat x509-test.log
-
-      - name: Run integration test
-        run: npm run test-x509
-
-      - name: Debug logs - after integration test run
-        if: always()
-        run: cat x509-test.log
-
-      - name: If integration test failed, shutdown the Containers
-        if: failure()
-        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
-
-      - name: If integration test failed, upload logs files as artifacts
-        if: failure()
-        uses: actions/upload-artifact@master
-        with:
-          name: x509-test-logs
-          path: ./ganacx509he-test.log
-
-  administrator-test:
-    runs-on: ubuntu-20.04
-    permissions:
-      id-token: write # for docker gha cache
-      contents: read
-      packages: read
-    env:
-      CONFIRMATIONS: 1
-      NF_SERVICES_TO_START: administrator,blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '16.17.0'
-
-      - name: Perform npm link
-        run: |
-          cd common-files
-          npm link
-          cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Start Containers
-        run: |
-          ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> administrator-test.log &disown
-
-      - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
-        with:
-          command: |
-            docker wait nightfall_3_deployer_1
-          attempt_limit: 100
-          attempt_delay: 20000
-
-      - name: Debug logs - after image builds
-        if: always()
-        run: cat administrator-test.log
-
-      - name: Run integration test
-        run: |
-          npm run test-administrator
-
-      - name: Debug logs - after integration test run
-        if: always()
-        run: cat administrator-test.log
-
-      - name: If integration test failed, shutdown the Containers
-        if: failure()
-        run: npm run nightfall-down
-
-      - name: If integration test failed, upload logs files as artifacts
-        if: failure()
-        uses: actions/upload-artifact@master
-        with:
-          name: administrator-test-logs
-          path: ./administrator-test.log
-
-  optimist-sync-test:
-    runs-on: ubuntu-18.04
-    permissions:
-      id-token: write # for docker gha cache
-      contents: read
-      packages: read
-    env:
-      CONFIRMATIONS: 1
-      NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
-    steps:
-      - uses: actions/checkout@master
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '16.17.0'
-
-      - name: Perform npm link
-        run: |
-          cd common-files
-          npm link
-          cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Start Containers
-        run: |
-          ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> optimist-sync-test.log &disown
-
-      - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
-        with:
-          command: |
-            docker wait nightfall_3_deployer_1
-          attempt_limit: 100
-          attempt_delay: 20000
-
-      - name: Debug logs - after image builds
-        if: always()
-        run: cat optimist-sync-test.log
-
-      - name: Run optimist sync test
-        run: |
-          npm run test-optimist-sync
-
-      - name: Debug logs - after optimist sync test run
-        if: always()
-        run: cat optimist-sync-test.log
-
-      - name: If optimist sync test failed, shutdown the Containers
-        if: failure()
-        run: npm run nightfall-down
-
-      - name: If optimist sync test failed, upload logs files as artifacts
-        if: failure()
-        uses: actions/upload-artifact@master
-        with:
-          name: optimist-sync-test-logs
-          path: ./optimist-sync-test.log
-
-  adversary-test:
-    env:
-      CONFIRMATIONS: 1
-    runs-on: ubuntu-20.04
-    permissions:
-      id-token: write # for docker gha cache
-      contents: read
-      packages: read
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '16.17.0'
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build adversary
-        run: npm run build-adversary
-
-      - name: Start Containers
-        run: |
-          ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d -a &> adversary-test.log &disown
-
-      - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
-        with:
-          command: |
-            docker wait nightfall_3_deployer_1
-          attempt_limit: 100
-          attempt_delay: 20000
-
-      - name: debug logs - after container startup
-        if: always()
-        run: cat adversary-test.log
-
-      - name: Run adversary test
-        run: |
-          VERBOSE=true npm run test-adversary
-
-      - name: debug logs - after integration test run
-        if: always()
-        run: cat adversary-test.log
-
-      - name: If adversary test failed, shutdown the Containers
-        if: failure()
-        run: |
-          npm run nightfall-down
-
-      - name: If integration test failed, upload logs files as artifacts
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: adversary-test-logs
-          path: ./adversary-test.log
-
-  ping-pong-test:
-    env:
-      CONFIRMATIONS: 1
-      NF_SERVICES_TO_START: blockchain,deployer,worker
-    runs-on: ubuntu-20.04
-    permissions:
-      id-token: write # for docker gha cache
-      contents: read
-      packages: read
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '16.17.0'
-
-      - name: Perform npm link
-        run: |
-          cd common-files
-          npm link
-          cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build adversary
-        run: npm run build-adversary
-
-      - name: Start Containers
-        run: |
-          ./bin/setup-nightfall
-          ./bin/start-multiproposer-test-env -g &> ping-pong-test.log &disown
-
-      - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
-        with:
-          command: |
-            docker wait nightfall_3_deployer_1
-          attempt_limit: 100
-          attempt_delay: 20000
-
-      - name: Debug logs - after image builds
-        if: always()
-        run: cat ping-pong-test.log
-
-      - name: 'Check client1 liveliness'
-        uses: Wandalen/wretry.action@v1.0.11
-        with:
-          command: |
-            curl -i http://localhost:8083/healthcheck
-          attempt_limit: 10
-          attempt_delay: 30000
-
-      - name: 'Check client2 liveliness'
-        uses: Wandalen/wretry.action@v1.0.11
-        with:
-          command: |
-            curl -i http://localhost:8086/healthcheck
-          attempt_limit: 10
-          attempt_delay: 30000
-
-      - name: Run ping-pong test
-        run: |
-          npm ci --no-audit
-          docker wait nightfall_3_deployer_1
-          npm run ping-pong
-
-      - name: If integration test failed, shutdown the Containers
-        if: failure()
-        run: |
-          npm run nightfall-down
-
-      - name: debug logs - after integration test run
-        if: always()
-        run: cat ping-pong-test.log
-
-      - name: If integration test failed, upload logs files as artifacts
-        if: failure()
-        uses: actions/upload-artifact@master
-        with:
-          name: ping-pong-test-logs
-          path: ./ping-pong-test.log
-
-  test-gas:
-    env:
-      MAX_BLOCK_SIZE: 25000
-      CONFIRMATIONS: 1
-      NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
-    name: check gas transactions per block
-    runs-on: ubuntu-20.04
-    permissions:
-      id-token: write # for docker gha cache
-      contents: read
-      packages: read
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '16.17.0'
-
-      - name: Perform npm link
-        run: |
-          cd common-files
-          npm link
-          cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Start Containers with ganache
-        run: |
-          ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> test-gas.log &disown
-
-      - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
-        with:
-          command: |
-            docker wait nightfall_3_deployer_1
-          attempt_limit: 100
-          attempt_delay: 20000
-
-      - name: Debug logs - after container startup
-        if: always()
-        run: cat test-gas.log
-
-      - name: Run tx-gas.mjs test suites
-        run: |
-          VERBOSE=true npm run test-gas
-
-      - name: Debug logs - after integration test run
-        if: always()
-        run: cat test-gas.log
-
-      - name: If integration test failed, shutdown the Containers
-        if: failure()
-        run: npm run nightfall-down
-
-      - name: If integration test failed, upload logs files as artifacts
-        if: failure()
-        uses: actions/upload-artifact@master
-        with:
-          name: test-gas-logs
-          path: ./test-gas.log
-
-  test-apps:
-    name: check apps for liveliness
-    runs-on: ubuntu-20.04
-    permissions:
-      id-token: write # for docker gha cache
-      contents: read
-      packages: read
-    env:
-      NF_SERVICES_TO_START: blockchain,deployer,optimist,worker
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '16.17.0'
-
-      - name: Perform npm link
-        run: |
-          cd common-files
-          npm link
-          cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Start Containers with ganache
-        run: |
-          ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> test-apps.log &disown
-
-      - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
-        with:
-          command: |
-            docker wait nightfall_3_deployer_1
-          attempt_limit: 100
-          attempt_delay: 20000
-
-      - name: Debug logs - after container startup
-        if: always()
-        run: cat test-apps.log
-
-      - name: Boot up the apps
-        run: |
-          ./bin/start-apps &> test-proposer.log &disown
-
-      - name: 'Check proposer liveliness'
-
-        uses: Wandalen/wretry.action@v1.0.11
-        with:
-          command: |
-            curl -i http://localhost:8092/healthcheck
-          attempt_limit: 10
-          attempt_delay: 30000
-
-      - name: Debug logs - after integration test run
-        if: always()
-        run: cat test-apps.log
-
-      - name: If integration test failed, shutdown the Containers
-        if: failure()
-        run: npm run nightfall-down
-
-      - name: If integration test failed, upload logs files as artifacts
-        if: failure()
-        uses: actions/upload-artifact@master
-        with:
-          name: test-apps-logs
-          path: ./test-apps.log
+  # ganache-protocol-test:
+  #   env:
+  #     CONFIRMATIONS: 1
+  #     NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
+  #   runs-on: ubuntu-20.04
+  #   permissions:
+  #     id-token: write # for docker gha cache
+  #     contents: read
+  #     packages: read
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: '16.17.0'
+
+  #     - name: Perform npm link
+  #       run: |
+  #         cd common-files
+  #         npm link
+  #         cd ..
+  #         npm link @polygon-nightfall/common-files
+  #         cd cli
+  #         npm link @polygon-nightfall/common-files
+  #         cd ..
+
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@v2
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Start Containers
+  #       run: |
+  #         ./bin/setup-nightfall
+  #         ./bin/start-nightfall -g -d &> ganache-test.log &disown
+
+  #     - name: Wait for images to be ready
+  #       uses: Wandalen/wretry.action@v1.0.11
+  #       with:
+  #         command: |
+  #           docker wait nightfall_3_deployer_1
+  #         attempt_limit: 100
+  #         attempt_delay: 20000
+
+  #     - name: Debug logs - after image builds
+  #       if: always()
+  #       run: cat ganache-test.log
+
+  #     - name: Run integration test
+  #       run: |
+  #         npm run test-e2e-protocol
+
+  #     - name: Debug logs - after integration test run
+  #       if: always()
+  #       run: cat ganache-test.log
+
+  #     - name: If integration test failed, shutdown the Containers
+  #       if: failure()
+  #       run: npm run nightfall-down
+
+  #     - name: If integration test failed, upload logs files as artifacts
+  #       if: failure()
+  #       uses: actions/upload-artifact@master
+  #       with:
+  #         name: ganache-test-logs
+  #         path: ./ganache-test.log
+
+  # ganache-erc20-test:
+  #   env:
+  #     CONFIRMATIONS: 1
+  #     NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
+  #   runs-on: ubuntu-20.04
+  #   permissions:
+  #     id-token: write # for docker gha cache
+  #     contents: read
+  #     packages: read
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v1
+  #       with:
+  #         node-version: '16.17.0'
+
+  #     - name: Perform npm link
+  #       run: |
+  #         cd common-files
+  #         npm link
+  #         cd ..
+  #         npm link @polygon-nightfall/common-files
+  #         cd cli
+  #         npm link @polygon-nightfall/common-files
+  #         cd ..
+
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@v2
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Start Containers
+  #       run: |
+  #         ./bin/setup-nightfall
+  #         ./bin/start-nightfall -g -d &> ganache-test.log &disown
+
+  #     - name: Wait for images to be ready
+  #       uses: Wandalen/wretry.action@v1.0.11
+  #       with:
+  #         command: |
+  #           docker wait nightfall_3_deployer_1
+  #         attempt_limit: 100
+  #         attempt_delay: 20000
+
+  #     - name: Debug logs - after image builds
+  #       if: always()
+  #       run: cat ganache-test.log
+
+  #     - name: Run integration test
+  #       run: |
+  #         npm run test-erc20-tokens
+
+  #     - name: Debug logs - after integration test run
+  #       if: always()
+  #       run: cat ganache-test.log
+
+  #     - name: If integration test failed, shutdown the Containers
+  #       if: failure()
+  #       run: npm run nightfall-down
+
+  #     - name: If integration test failed, upload logs files as artifacts
+  #       if: failure()
+  #       uses: actions/upload-artifact@master
+  #       with:
+  #         name: ganache-test-logs
+  #         path: ./ganache-test.log
+
+  # ganache-erc721-test:
+  #   env:
+  #     CONFIRMATIONS: 1
+  #     NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
+  #   runs-on: ubuntu-20.04
+  #   permissions:
+  #     id-token: write # for docker gha cache
+  #     contents: read
+  #     packages: read
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v1
+  #       with:
+  #         node-version: '16.17.0'
+
+  #     - name: Perform npm link
+  #       run: |
+  #         cd common-files
+  #         npm link
+  #         cd ..
+  #         npm link @polygon-nightfall/common-files
+  #         cd cli
+  #         npm link @polygon-nightfall/common-files
+  #         cd ..
+
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@v2
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Start Containers
+  #       run: |
+  #         ./bin/setup-nightfall
+  #         ./bin/start-nightfall -g -d &> ganache-test.log &disown
+
+  #     - name: Wait for images to be ready
+  #       uses: Wandalen/wretry.action@v1.0.11
+  #       with:
+  #         command: |
+  #           docker wait nightfall_3_deployer_1
+  #         attempt_limit: 100
+  #         attempt_delay: 20000
+
+  #     - name: Debug logs - after image builds
+  #       if: always()
+  #       run: cat ganache-test.log
+
+  #     - name: Run integration test
+  #       run: |
+  #         npm run test-erc721-tokens
+
+  #     - name: Debug logs - after integration test run
+  #       if: always()
+  #       run: cat ganache-test.log
+
+  #     - name: If integration test failed, shutdown the Containers
+  #       if: failure()
+  #       run: npm run nightfall-down
+
+  #     - name: If integration test failed, upload logs files as artifacts
+  #       if: failure()
+  #       uses: actions/upload-artifact@master
+  #       with:
+  #         name: ganache-test-logs
+  #         path: ./ganache-test.log
+
+  # ganache-erc1155-test:
+  #   env:
+  #     CONFIRMATIONS: 1
+  #     NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
+  #   runs-on: ubuntu-20.04
+  #   permissions:
+  #     id-token: write # for docker gha cache
+  #     contents: read
+  #     packages: read
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v1
+  #       with:
+  #         node-version: '16.17.0'
+
+  #     - name: Perform npm link
+  #       run: |
+  #         cd common-files
+  #         npm link
+  #         cd ..
+  #         npm link @polygon-nightfall/common-files
+  #         cd cli
+  #         npm link @polygon-nightfall/common-files
+  #         cd ..
+
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@v2
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Start Containers
+  #       run: |
+  #         ./bin/setup-nightfall
+  #         ./bin/start-nightfall -g -d &> ganache-test.log &disown
+
+  #     - name: Wait for images to be ready
+  #       uses: Wandalen/wretry.action@v1.0.11
+  #       with:
+  #         command: |
+  #           docker wait nightfall_3_deployer_1
+  #         attempt_limit: 100
+  #         attempt_delay: 20000
+
+  #     - name: Debug logs - after image builds
+  #       if: always()
+  #       run: cat ganache-test.log
+
+  #     - name: Run integration test
+  #       run: |
+  #         npm run test-erc1155-tokens
+
+  #     - name: Debug logs - after integration test run
+  #       if: always()
+  #       run: cat ganache-test.log
+
+  #     - name: If integration test failed, shutdown the Containers
+  #       if: failure()
+  #       run: npm run nightfall-down
+
+  #     - name: If integration test failed, upload logs files as artifacts
+  #       if: failure()
+  #       uses: actions/upload-artifact@master
+  #       with:
+  #         name: ganache-test-logs
+  #         path: ./ganache-test.log
+
+  # ganache-tokenisation-l2-test:
+  #   env:
+  #     CONFIRMATIONS: 1
+  #     NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
+  #   runs-on: ubuntu-20.04
+  #   permissions:
+  #     id-token: write # for docker gha cache
+  #     contents: read
+  #     packages: read
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v1
+  #       with:
+  #         node-version: '16.17.0'
+
+  #     - name: Perform npm link
+  #       run: |
+  #         cd common-files
+  #         npm link
+  #         cd ..
+  #         npm link @polygon-nightfall/common-files
+  #         cd cli
+  #         npm link @polygon-nightfall/common-files
+  #         npm ci --no-audit
+  #         cd ..
+
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@v2
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Start Containers
+  #       run: |
+  #         ./bin/setup-nightfall
+  #         ./bin/start-nightfall -g -d &> ganache-test.log &disown
+
+  #     - name: Wait for images to be ready
+  #       uses: Wandalen/wretry.action@v1.0.11
+  #       with:
+  #         command: |
+  #           docker wait nightfall_3_deployer_1
+  #         attempt_limit: 100
+  #         attempt_delay: 20000
+
+  #     - name: Debug logs - after image builds
+  #       if: always()
+  #       run: cat ganache-test.log
+
+  #     - name: Run integration test
+  #       run: |
+  #         npm run test-l2tokenisation
+
+  #     - name: Debug logs - after integration test run
+  #       if: always()
+  #       run: cat ganache-test.log
+
+  #     - name: If integration test failed, shutdown the Containers
+  #       if: failure()
+  #       run: npm run nightfall-down
+
+  #     - name: If integration test failed, upload logs files as artifacts
+  #       if: failure()
+  #       uses: actions/upload-artifact@master
+  #       with:
+  #         name: ganache-test-logs
+  #         path: ./ganache-test.log
+
+  # x509-test:
+  #   env:
+  #     WHITELISTING: enable
+  #     CONFIRMATIONS: 1
+  #     NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
+  #   runs-on: ubuntu-20.04
+  #   permissions:
+  #     id-token: write # for docker gha cache
+  #     contents: read
+  #     packages: read
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: '16.17.0'
+
+  #     - name: Perform npm link
+  #       run: |
+  #         cd common-files
+  #         npm link
+  #         cd ..
+  #         npm link @polygon-nightfall/common-files
+  #         cd cli
+  #         npm link @polygon-nightfall/common-files
+  #         cd ..
+
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@v2
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Start Containers
+  #       run: |
+  #         ./bin/setup-nightfall
+  #         ./bin/start-nightfall -g -d &> x509-test.log &disown
+
+  #     - name: Wait for images to be ready
+  #       uses: Wandalen/wretry.action@v1.0.11
+  #       with:
+  #         command: |
+  #           docker wait nightfall_3_deployer_1
+  #         attempt_limit: 100
+  #         attempt_delay: 20000
+
+  #     - name: Debug logs - after image builds
+  #       if: always()
+  #       run: cat x509-test.log
+
+  #     - name: Run integration test
+  #       run: npm run test-x509
+
+  #     - name: Debug logs - after integration test run
+  #       if: always()
+  #       run: cat x509-test.log
+
+  #     - name: If integration test failed, shutdown the Containers
+  #       if: failure()
+  #       run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
+
+  #     - name: If integration test failed, upload logs files as artifacts
+  #       if: failure()
+  #       uses: actions/upload-artifact@master
+  #       with:
+  #         name: x509-test-logs
+  #         path: ./ganacx509he-test.log
+
+  # administrator-test:
+  #   runs-on: ubuntu-20.04
+  #   permissions:
+  #     id-token: write # for docker gha cache
+  #     contents: read
+  #     packages: read
+  #   env:
+  #     CONFIRMATIONS: 1
+  #     NF_SERVICES_TO_START: administrator,blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: '16.17.0'
+
+  #     - name: Perform npm link
+  #       run: |
+  #         cd common-files
+  #         npm link
+  #         cd ..
+  #         npm link @polygon-nightfall/common-files
+  #         cd cli
+  #         npm link @polygon-nightfall/common-files
+  #         cd ..
+
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@v2
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Start Containers
+  #       run: |
+  #         ./bin/setup-nightfall
+  #         ./bin/start-nightfall -g -d &> administrator-test.log &disown
+
+  #     - name: Wait for images to be ready
+  #       uses: Wandalen/wretry.action@v1.0.11
+  #       with:
+  #         command: |
+  #           docker wait nightfall_3_deployer_1
+  #         attempt_limit: 100
+  #         attempt_delay: 20000
+
+  #     - name: Debug logs - after image builds
+  #       if: always()
+  #       run: cat administrator-test.log
+
+  #     - name: Run integration test
+  #       run: |
+  #         npm run test-administrator
+
+  #     - name: Debug logs - after integration test run
+  #       if: always()
+  #       run: cat administrator-test.log
+
+  #     - name: If integration test failed, shutdown the Containers
+  #       if: failure()
+  #       run: npm run nightfall-down
+
+  #     - name: If integration test failed, upload logs files as artifacts
+  #       if: failure()
+  #       uses: actions/upload-artifact@master
+  #       with:
+  #         name: administrator-test-logs
+  #         path: ./administrator-test.log
+
+  # optimist-sync-test:
+  #   runs-on: ubuntu-18.04
+  #   permissions:
+  #     id-token: write # for docker gha cache
+  #     contents: read
+  #     packages: read
+  #   env:
+  #     CONFIRMATIONS: 1
+  #     NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
+  #   steps:
+  #     - uses: actions/checkout@master
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: '16.17.0'
+
+  #     - name: Perform npm link
+  #       run: |
+  #         cd common-files
+  #         npm link
+  #         cd ..
+  #         npm link @polygon-nightfall/common-files
+  #         cd cli
+  #         npm link @polygon-nightfall/common-files
+  #         cd ..
+
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@v2
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Start Containers
+  #       run: |
+  #         ./bin/setup-nightfall
+  #         ./bin/start-nightfall -g -d &> optimist-sync-test.log &disown
+
+  #     - name: Wait for images to be ready
+  #       uses: Wandalen/wretry.action@v1.0.11
+  #       with:
+  #         command: |
+  #           docker wait nightfall_3_deployer_1
+  #         attempt_limit: 100
+  #         attempt_delay: 20000
+
+  #     - name: Debug logs - after image builds
+  #       if: always()
+  #       run: cat optimist-sync-test.log
+
+  #     - name: Run optimist sync test
+  #       run: |
+  #         npm run test-optimist-sync
+
+  #     - name: Debug logs - after optimist sync test run
+  #       if: always()
+  #       run: cat optimist-sync-test.log
+
+  #     - name: If optimist sync test failed, shutdown the Containers
+  #       if: failure()
+  #       run: npm run nightfall-down
+
+  #     - name: If optimist sync test failed, upload logs files as artifacts
+  #       if: failure()
+  #       uses: actions/upload-artifact@master
+  #       with:
+  #         name: optimist-sync-test-logs
+  #         path: ./optimist-sync-test.log
+
+  # adversary-test:
+  #   env:
+  #     CONFIRMATIONS: 1
+  #   runs-on: ubuntu-20.04
+  #   permissions:
+  #     id-token: write # for docker gha cache
+  #     contents: read
+  #     packages: read
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v1
+  #       with:
+  #         node-version: '16.17.0'
+
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@v2
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Build adversary
+  #       run: npm run build-adversary
+
+  #     - name: Start Containers
+  #       run: |
+  #         ./bin/setup-nightfall
+  #         ./bin/start-nightfall -g -d -a &> adversary-test.log &disown
+
+  #     - name: Wait for images to be ready
+  #       uses: Wandalen/wretry.action@v1.0.11
+  #       with:
+  #         command: |
+  #           docker wait nightfall_3_deployer_1
+  #         attempt_limit: 100
+  #         attempt_delay: 20000
+
+  #     - name: debug logs - after container startup
+  #       if: always()
+  #       run: cat adversary-test.log
+
+  #     - name: Run adversary test
+  #       run: |
+  #         VERBOSE=true npm run test-adversary
+
+  #     - name: debug logs - after integration test run
+  #       if: always()
+  #       run: cat adversary-test.log
+
+  #     - name: If adversary test failed, shutdown the Containers
+  #       if: failure()
+  #       run: |
+  #         npm run nightfall-down
+
+  #     - name: If integration test failed, upload logs files as artifacts
+  #       if: failure()
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         name: adversary-test-logs
+  #         path: ./adversary-test.log
+
+  # ping-pong-test:
+  #   env:
+  #     CONFIRMATIONS: 1
+  #     NF_SERVICES_TO_START: blockchain,deployer,worker
+  #   runs-on: ubuntu-20.04
+  #   permissions:
+  #     id-token: write # for docker gha cache
+  #     contents: read
+  #     packages: read
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: '16.17.0'
+
+  #     - name: Perform npm link
+  #       run: |
+  #         cd common-files
+  #         npm link
+  #         cd ..
+  #         npm link @polygon-nightfall/common-files
+  #         cd cli
+  #         npm link @polygon-nightfall/common-files
+  #         cd ..
+
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@v2
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Build adversary
+  #       run: npm run build-adversary
+
+  #     - name: Start Containers
+  #       run: |
+  #         ./bin/setup-nightfall
+  #         ./bin/start-multiproposer-test-env -g &> ping-pong-test.log &disown
+
+  #     - name: Wait for images to be ready
+  #       uses: Wandalen/wretry.action@v1.0.11
+  #       with:
+  #         command: |
+  #           docker wait nightfall_3_deployer_1
+  #         attempt_limit: 100
+  #         attempt_delay: 20000
+
+  #     - name: Debug logs - after image builds
+  #       if: always()
+  #       run: cat ping-pong-test.log
+
+  #     - name: 'Check client1 liveliness'
+  #       uses: Wandalen/wretry.action@v1.0.11
+  #       with:
+  #         command: |
+  #           curl -i http://localhost:8083/healthcheck
+  #         attempt_limit: 10
+  #         attempt_delay: 30000
+
+  #     - name: 'Check client2 liveliness'
+  #       uses: Wandalen/wretry.action@v1.0.11
+  #       with:
+  #         command: |
+  #           curl -i http://localhost:8086/healthcheck
+  #         attempt_limit: 10
+  #         attempt_delay: 30000
+
+  #     - name: Run ping-pong test
+  #       run: |
+  #         npm ci --no-audit
+  #         docker wait nightfall_3_deployer_1
+  #         npm run ping-pong
+
+  #     - name: If integration test failed, shutdown the Containers
+  #       if: failure()
+  #       run: |
+  #         npm run nightfall-down
+
+  #     - name: debug logs - after integration test run
+  #       if: always()
+  #       run: cat ping-pong-test.log
+
+  #     - name: If integration test failed, upload logs files as artifacts
+  #       if: failure()
+  #       uses: actions/upload-artifact@master
+  #       with:
+  #         name: ping-pong-test-logs
+  #         path: ./ping-pong-test.log
+
+  # test-gas:
+  #   env:
+  #     MAX_BLOCK_SIZE: 25000
+  #     CONFIRMATIONS: 1
+  #     NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
+  #   name: check gas transactions per block
+  #   runs-on: ubuntu-20.04
+  #   permissions:
+  #     id-token: write # for docker gha cache
+  #     contents: read
+  #     packages: read
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: '16.17.0'
+
+  #     - name: Perform npm link
+  #       run: |
+  #         cd common-files
+  #         npm link
+  #         cd ..
+  #         npm link @polygon-nightfall/common-files
+  #         cd cli
+  #         npm link @polygon-nightfall/common-files
+  #         cd ..
+
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@v2
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Start Containers with ganache
+  #       run: |
+  #         ./bin/setup-nightfall
+  #         ./bin/start-nightfall -g -d &> test-gas.log &disown
+
+  #     - name: Wait for images to be ready
+  #       uses: Wandalen/wretry.action@v1.0.11
+  #       with:
+  #         command: |
+  #           docker wait nightfall_3_deployer_1
+  #         attempt_limit: 100
+  #         attempt_delay: 20000
+
+  #     - name: Debug logs - after container startup
+  #       if: always()
+  #       run: cat test-gas.log
+
+  #     - name: Run tx-gas.mjs test suites
+  #       run: |
+  #         VERBOSE=true npm run test-gas
+
+  #     - name: Debug logs - after integration test run
+  #       if: always()
+  #       run: cat test-gas.log
+
+  #     - name: If integration test failed, shutdown the Containers
+  #       if: failure()
+  #       run: npm run nightfall-down
+
+  #     - name: If integration test failed, upload logs files as artifacts
+  #       if: failure()
+  #       uses: actions/upload-artifact@master
+  #       with:
+  #         name: test-gas-logs
+  #         path: ./test-gas.log
+
+  # test-apps:
+  #   name: check apps for liveliness
+  #   runs-on: ubuntu-20.04
+  #   permissions:
+  #     id-token: write # for docker gha cache
+  #     contents: read
+  #     packages: read
+  #   env:
+  #     NF_SERVICES_TO_START: blockchain,deployer,optimist,worker
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: '16.17.0'
+
+  #     - name: Perform npm link
+  #       run: |
+  #         cd common-files
+  #         npm link
+  #         cd ..
+  #         npm link @polygon-nightfall/common-files
+  #         cd cli
+  #         npm link @polygon-nightfall/common-files
+  #         cd ..
+
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@v2
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Start Containers with ganache
+  #       run: |
+  #         ./bin/setup-nightfall
+  #         ./bin/start-nightfall -g -d &> test-apps.log &disown
+
+  #     - name: Wait for images to be ready
+  #       uses: Wandalen/wretry.action@v1.0.11
+  #       with:
+  #         command: |
+  #           docker wait nightfall_3_deployer_1
+  #         attempt_limit: 100
+  #         attempt_delay: 20000
+
+  #     - name: Debug logs - after container startup
+  #       if: always()
+  #       run: cat test-apps.log
+
+  #     - name: Boot up the apps
+  #       run: |
+  #         ./bin/start-apps &> test-proposer.log &disown
+
+  #     - name: 'Check proposer liveliness'
+
+  #       uses: Wandalen/wretry.action@v1.0.11
+  #       with:
+  #         command: |
+  #           curl -i http://localhost:8092/healthcheck
+  #         attempt_limit: 10
+  #         attempt_delay: 30000
+
+  #     - name: Debug logs - after integration test run
+  #       if: always()
+  #       run: cat test-apps.log
+
+  #     - name: If integration test failed, shutdown the Containers
+  #       if: failure()
+  #       run: npm run nightfall-down
+
+  #     - name: If integration test failed, upload logs files as artifacts
+  #       if: failure()
+  #       uses: actions/upload-artifact@master
+  #       with:
+  #         name: test-apps-logs
+  #         path: ./test-apps.log
 
   test-client:
     name: check client for liveliness

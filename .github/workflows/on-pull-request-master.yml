@@ -775,7 +775,7 @@ jobs:
   ping-pong-test:
     env:
       CONFIRMATIONS: 1
-      NF_SERVICES_TO_START: blockchain,deployer,worker
+      NF_SERVICES_TO_START: blockchain,deployer,worker,hosted-utils-api-server
     runs-on: ubuntu-20.04
     permissions:
       id-token: write # for docker gha cache

@@ -56,7 +56,7 @@ services:
   hosted-utils-api-server:
     build:
       dockerfile: docker/hosted-utils-api-server.Dockerfile
-      context: ..
+      context: ../hosted-utils-api-server
     depends_on:
       - worker
     ports:

@@ -1,6 +1,6 @@
 #! /bin/bash
 
-set -xe
+set -e
 
 usage()
 {
@@ -22,4 +22,5 @@ fi
 mkdir -p "$PROVING_FILES_FOLDER"
 WORKER=$(docker ps | grep nightfall_3_worker_1 | awk '{print $1}')
 docker cp "$WORKER":/app/output/. ./"${PROVING_FILES_FOLDER}"
+echo "proving files exported"
 ls "${PROVING_FILES_FOLDER}"

@@ -127,7 +127,7 @@ jobs:
         id: cache-proving-files-restore
         uses: actions/cache/restore@v3
         with:
-          path: proving-files/default
+          path: proving_files/default
           key:
             proving-files-${{ hashFiles('docker/circom.Dockerfile',
             'nightfall-deployer/circuits/**/*.circom') }}
@@ -172,7 +172,7 @@ jobs:
         id: cache-proving-files-save
         uses: actions/cache/save@v3
         with:
-          path: proving-files/default
+          path: proving_files/default
           key: ${{ steps.cache-proving-files-restore.outputs.cache-primary-key }}
 
       - name: Debug logs - after integration test run

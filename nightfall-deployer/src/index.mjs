@@ -6,7 +6,9 @@ import setupContracts from './contract-setup.mjs';
 // TODO these can be paralleled
 async function main() {
   await circuits.waitForWorker();
+  console.time('setupCircuits - Execution Time');
   await circuits.setupCircuits();
+  console.timeEnd('setupCircuits - Execution Time');
   try {
     await setupContracts();
   } catch (err) {

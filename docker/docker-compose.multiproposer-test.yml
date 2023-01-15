@@ -54,9 +54,7 @@ services:
       TEST_SANCTIONS_CONTRACT: 'mock'
 
   hosted-utils-api-server:
-    build:
-      dockerfile: docker/hosted-utils-api-server.Dockerfile
-      context: ../hosted-utils-api-server
+    image: ghcr.io/fullkomnun/nightfall3-hosted-utils-api-server:latest
     depends_on:
       - worker
     ports:

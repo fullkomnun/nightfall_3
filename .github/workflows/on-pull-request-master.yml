@@ -123,6 +123,19 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd ..
 
+      - name: Restore cached Proving Files
+        id: cache-proving-files-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: proving-files/default
+          key:
+            proving-files-${{ hashFiles('docker/circom.Dockerfile',
+            'nightfall-deployer/circuits/**/*.circom') }}
+
+      - name: Toggle usage of cached proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit == 'true'
+        run: echo "PROVING_FILES=default" >> $GITHUB_ENV
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -150,6 +163,17 @@ jobs:
       - name: Circuits Test
         run: |
           npm run test-circuits
+
+      - name: Export proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit != 'true'
+        run: ./bin/export-proving-files default
+
+      - name: Save Proving Files
+        id: cache-proving-files-save
+        uses: actions/cache/save@v3
+        with:
+          path: proving-files/default
+          key: ${{ steps.cache-proving-files-restore.outputs.cache-primary-key }}
 
       - name: Debug logs - after integration test run
         if: always()

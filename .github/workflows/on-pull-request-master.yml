@@ -112,15 +112,18 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+          cache: 'npm'
+          cache-dependency-path: |
+            common-files/package-lock.json
+            cli/package-lock.json
+            package-lock.json
 
-      - name: Perform npm link
+      - name: Install dependencies
         run: |
           cd common-files
-          npm link
-          cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
+          npm ci --no-audit
+          cd ../cli
+          npm ci --no-audit
           cd ..
 
       - name: Restore cached Proving Files

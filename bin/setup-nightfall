@@ -54,6 +54,10 @@ if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"proposer"* 
   docker $BUILDKIT build $NO_CACHE_FLAG "${BUILDKIT_CACHING[@]}" -t ghcr.io/fullkomnun/nightfall3-proposer -f docker/proposer.Dockerfile .
 fi
 
+if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"challenger"* ]]; then
+  docker $BUILDKIT build $NO_CACHE_FLAG "${BUILDKIT_CACHING[@]}" -t ghcr.io/fullkomnun/nightfall3-challenger -f docker/challenger.Dockerfile .
+fi
+
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"worker"* ]]; then
   docker $BUILDKIT build $NO_CACHE_FLAG "${BUILDKIT_CACHING[@]}" -t ghcr.io/fullkomnun/nightfall3-worker -f docker/worker.Dockerfile .
 fi

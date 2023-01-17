@@ -1138,7 +1138,7 @@ jobs:
 
       - name: Run ping-pong test
         run: |
-          npm ci --no-audit
+          npm ci --install-links --no-audit
           docker wait nightfall_3_deployer_1
           npm run ping-pong
 

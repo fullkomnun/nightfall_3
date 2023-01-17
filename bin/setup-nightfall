@@ -3,7 +3,7 @@
 set -e
 
 # Install node dependencies
-npm ci --no-audit
+npm ci --install-links --no-audit
 
 #OS_ARCH=$(uname -m)
 NO_CACHE_FLAG=''

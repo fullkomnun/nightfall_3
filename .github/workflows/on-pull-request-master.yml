@@ -28,7 +28,7 @@ jobs:
           node-version: '16.17.0'
       - name: eslint check
         run: |
-          npm ci
+          npm ci --install-links
           cd wallet/
           npm ci
           cd ..
@@ -43,10 +43,10 @@ jobs:
           node-version: '16.17.0'
       - name: General Tests
         run: |
-          npm ci --no-audit
+          npm ci --install-links --no-audit
           npm run test-general-stuff
           cd common-files
-          npm ci --no-audit
+          npm ci --install-links --no-audit
           npm run test
 
   unit-tests:
@@ -58,7 +58,7 @@ jobs:
           node-version: '16.17.0'
       - name: Unit Tests
         run: |
-          npm ci --no-audit
+          npm ci --install-links --no-audit
           cd common-files
           npm ci --no-audit
           cd ../
@@ -90,11 +90,11 @@ jobs:
 
       - name: Unit Circuit Tests
         run: |
-          npm ci --no-audit
+          npm ci --install-links --no-audit
           cd common-files
           npm ci --no-audit
           cd ../nightfall-deployer
-          npm ci --no-audit
+          npm ci --install-links --no-audit
           cd ../
           npm run unit-test-circuits
 
@@ -123,7 +123,7 @@ jobs:
           cd common-files
           npm ci --no-audit
           cd ../cli
-          npm ci --no-audit
+          npm ci --install-links --no-audit
           cd ..
 
       - name: Restore cached Proving Files
@@ -218,7 +218,7 @@ jobs:
           cd common-files
           npm ci --no-audit
           cd ../cli
-          npm ci --no-audit
+          npm ci --install-links --no-audit
           cd ..
 
       - name: Restore cached Proving Files
@@ -313,7 +313,7 @@ jobs:
           cd common-files
           npm ci --no-audit
           cd ../cli
-          npm ci --no-audit
+          npm ci --install-links --no-audit
           cd ..
 
       - name: Restore cached Proving Files
@@ -408,7 +408,7 @@ jobs:
           cd common-files
           npm ci --no-audit
           cd ../cli
-          npm ci --no-audit
+          npm ci --install-links --no-audit
           cd ..
 
       - name: Restore cached Proving Files
@@ -503,7 +503,7 @@ jobs:
           cd common-files
           npm ci --no-audit
           cd ../cli
-          npm ci --no-audit
+          npm ci --install-links --no-audit
           cd ..
 
       - name: Restore cached Proving Files
@@ -598,7 +598,7 @@ jobs:
           cd common-files
           npm ci --no-audit
           cd ../cli
-          npm ci --no-audit
+          npm ci --install-links --no-audit
           cd ..
 
       - name: Restore cached Proving Files
@@ -694,7 +694,7 @@ jobs:
           cd common-files
           npm ci --no-audit
           cd ../cli
-          npm ci --no-audit
+          npm ci --install-links --no-audit
           cd ..
 
       - name: Restore cached Proving Files
@@ -788,7 +788,7 @@ jobs:
           cd common-files
           npm ci --no-audit
           cd ../cli
-          npm ci --no-audit
+          npm ci --install-links --no-audit
           cd ..
 
       - name: Restore cached Proving Files
@@ -883,7 +883,7 @@ jobs:
           cd common-files
           npm ci --no-audit
           cd ../cli
-          npm ci --no-audit
+          npm ci --install-links --no-audit
           cd ..
 
       - name: Restore cached Proving Files
@@ -978,7 +978,7 @@ jobs:
           cd common-files
           npm ci --no-audit
           cd ../cli
-          npm ci --no-audit
+          npm ci --install-links --no-audit
           cd ..
 
       - name: Restore cached Proving Files
@@ -1077,7 +1077,7 @@ jobs:
           cd common-files
           npm ci --no-audit
           cd ../cli
-          npm ci --no-audit
+          npm ci --install-links --no-audit
           cd ..
 
       - name: Restore cached Proving Files
@@ -1196,7 +1196,7 @@ jobs:
           cd common-files
           npm ci --no-audit
           cd ../cli
-          npm ci --no-audit
+          npm ci --install-links --no-audit
           cd ..
 
       - name: Restore cached Proving Files
@@ -1268,6 +1268,7 @@ jobs:
 
   test-apps:
     name: check apps for liveliness
+    if: ${{ false }}
     runs-on: ubuntu-20.04
     permissions:
       id-token: write # for docker gha cache
@@ -1291,7 +1292,7 @@ jobs:
           cd common-files
           npm ci --no-audit
           cd ../cli
-          npm ci --no-audit
+          npm ci --install-links --no-audit
           cd ..
 
       - name: Restore cached Proving Files

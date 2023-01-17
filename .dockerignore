@@ -9,9 +9,12 @@ bin
 docker
 cli/build
 config/geth/data
+common-files/test
 backup
 proving_files
 wallet
+jsdoc.json
+LICENSE
 
 # Ignore unnecessary files inside allowed directories
 # This should go after the allowed directories
@@ -28,3 +31,5 @@ wallet
 **/.npmrc
 **/.nvmrc
 **/*.md
+**/.dockerignore
+**/.gitignore

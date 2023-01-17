@@ -1055,7 +1055,7 @@ jobs:
   ping-pong-test:
     env:
       CONFIRMATIONS: 1
-      NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker,hosted-utils-api-server,challenger
+      NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker,hosted-utils-api-server,proposer,challenger
     runs-on: ubuntu-20.04
     permissions:
       id-token: write # for docker gha cache
@@ -1274,7 +1274,7 @@ jobs:
       contents: read
       packages: read
     env:
-      NF_SERVICES_TO_START: blockchain,deployer,optimist,worker
+      NF_SERVICES_TO_START: blockchain,deployer,optimist,worker,proposer
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3

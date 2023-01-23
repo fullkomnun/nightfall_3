@@ -388,6 +388,7 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    if: ${{ false }}
     permissions:
       id-token: write # for docker gha cache
       contents: read
@@ -483,6 +484,7 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    if: ${{ false }}
     permissions:
       id-token: write # for docker gha cache
       contents: read
@@ -578,6 +580,7 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    if: ${{ false }}
     permissions:
       id-token: write # for docker gha cache
       contents: read
@@ -674,6 +677,7 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    if: ${{ false }}
     permissions:
       id-token: write # for docker gha cache
       contents: read
@@ -765,6 +769,7 @@ jobs:
 
   administrator-test:
     runs-on: ubuntu-20.04
+    if: ${{ false }}
     permissions:
       id-token: write # for docker gha cache
       contents: read
@@ -860,6 +865,7 @@ jobs:
 
   optimist-sync-test:
     runs-on: ubuntu-18.04
+    if: ${{ false }}
     permissions:
       id-token: write # for docker gha cache
       contents: read
@@ -958,6 +964,7 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker,lazy-optimist,bad-client,mongodb-adversary
     runs-on: ubuntu-20.04
+    if: ${{ false }}
     permissions:
       id-token: write # for docker gha cache
       contents: read
@@ -1057,6 +1064,7 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker,hosted-utils-api-server,proposer,challenger
     runs-on: ubuntu-20.04
+    if: ${{ false }}
     permissions:
       id-token: write # for docker gha cache
       contents: read
@@ -1175,6 +1183,7 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     name: check gas transactions per block
+    if: ${{ false }}
     runs-on: ubuntu-20.04
     permissions:
       id-token: write # for docker gha cache
@@ -1435,3 +1444,10 @@ jobs:
         with:
           name: test-client-logs
           path: ./test-client.log
+
+  build-and-push:
+    uses: ./.github/workflows/reusable_docker-build-and-push.yaml
+    secrets: inherit # pass all secrets to the called workflow
+    with:
+      publish: true
+      file: 'docker/optimist.Dockerfile'

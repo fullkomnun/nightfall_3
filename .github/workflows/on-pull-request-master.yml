@@ -1446,8 +1446,11 @@ jobs:
           path: ./test-client.log
 
   build-and-push:
+    strategy:
+      matrix:
+        component: ['optimist', 'proposer']
     uses: ./.github/workflows/reusable_docker-build-and-push.yaml
     secrets: inherit # pass all secrets to the called workflow
     with:
       publish: true
-      component: 'optimist'
+      component: ${{ matrix.component }}

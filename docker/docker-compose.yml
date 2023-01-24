@@ -3,7 +3,7 @@ version: '3.5'
 # bindings.  See the readme for more information.
 services:
   administrator:
-    image: ghcr.io/eyblockchain/nightfall3-administrator:latest
+    image: ghcr.io/fullkomnun/nightfall3-administrator:latest
     networks:
       - nightfall_network
     depends_on:
@@ -23,7 +23,7 @@ services:
       MONGO_URL: ${ADMIN_MONGO_URL:-mongodb://mongodb:27017}
 
   client:
-    image: ghcr.io/eyblockchain/nightfall3-client:latest
+    image: ghcr.io/fullkomnun/nightfall3-client:latest
     volumes:
       - type: volume
         source: build
@@ -55,7 +55,7 @@ services:
 
     # Temporary container to deploy contracts and circuits and populate volumes
   deployer:
-    image: ghcr.io/eyblockchain/nightfall3-deployer:latest
+    image: ghcr.io/fullkomnun/nightfall3-deployer:latest
     volumes:
       - type: volume
         source: build
@@ -75,12 +75,12 @@ services:
       CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST:-worker}
       UPGRADE: ${UPGRADE_CONTRACTS}
       ALWAYS_DO_TRUSTED_SETUP: ${ALWAYS_DO_TRUSTED_SETUP}
+      # NB WHITELISTING is an important security feature and should not be disabled in production.
+      WHITELISTING: ${WHITELISTING:-enable}
+      TEST_SANCTIONS_CONTRACT: 'mock'
 
   hosted-utils-api-server:
-    build:
-      dockerfile: docker/hosted-utils-api-server.Dockerfile
-      context: ..
-    image: ghcr.io/eyblockchain/nightfall3-hosted-utils-api-server:latest
+    image: ghcr.io/fullkomnun/nightfall3-hosted-utils-api-server:latest
     depends_on:
       - worker
     ports:
@@ -91,7 +91,7 @@ services:
         target: /app/public/
 
   optimist:
-    image: ghcr.io/eyblockchain/nightfall3-optimist:latest
+    image: ghcr.io/fullkomnun/nightfall3-optimist:latest
     depends_on:
       - mongodb
     networks:
@@ -141,7 +141,7 @@ services:
         target: /data/db
 
   worker:
-    image: ghcr.io/eyblockchain/nightfall3-worker:latest
+    image: ghcr.io/fullkomnun/nightfall3-worker:latest
     volumes:
       - type: volume
         source: proving_files

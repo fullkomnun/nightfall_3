@@ -10,6 +10,7 @@ usage()
   echo "  -l or --localhost; to connect to an already running blockchain on ws://localhost:8546"
   echo "  -h or --help; to print this message"
   echo "  -d or --dev; to bind mount the filesystem and use it for development"
+  echo "  --proving <proving_files folder>; to restore proving files and skip setup"
 }
 
 # select a Geth or Ganache client
@@ -33,6 +34,9 @@ while [ -n "$1" ]; do
       -d  | --dev )                 DEV="-f docker/docker-compose.dev.yml"
                                     ;;
       -a  | --adversary)            ADVERSARY="-f docker/docker-compose.adversary.yml"
+                                    ;;
+      --proving)                    PROVING_FILES="$2"
+                                    shift
                                     ;;
       -mpc)                         export MPC="true"
                                     ;;
@@ -90,6 +94,26 @@ fi
 
 if [ ! -z "$DEV" ]; then
   cd common-files && npm ci && cd ..
+fi
+
+if [ -n "$PROVING_FILES" ]; then
+  # Usage: copy-to-docker-volume SRC_PATH DEST_VOLUME_NAME [DEST_PATH]
+  copy-to-docker-volume() {
+    SRC_PATH=$1
+    DEST_VOLUME_NAME=$2
+    DEST_PATH="${3:-}"
+    # create smallest Docker image possible
+    echo -e 'FROM scratch\nLABEL empty=""' | docker build -t empty -
+    # create temporary container to be able to mount volume
+    CONTAINER_ID=$(docker container create -v "${DEST_VOLUME_NAME}":/data empty cmd)
+    # copy files to volume
+    docker cp "${SRC_PATH}" "${CONTAINER_ID}":"/data/${DEST_PATH}"
+    # remove temporary container
+    docker rm "${CONTAINER_ID}"
+  }
+
+  docker volume create nightfall_3_proving_files
+  copy-to-docker-volume "./proving_files/${PROVING_FILES}/." nightfall_3_proving_files 
 fi
 
 docker-compose $FILE  $DEV $ADVERSARY -p 'nightfall_3' up -d --remove-orphans ${NF_SERVICES_TO_START//,/ }

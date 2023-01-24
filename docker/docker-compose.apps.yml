@@ -2,10 +2,7 @@ version: '3.5'
 # Use this script for making nightfall_3 use stubs.
 services:
   proposer:
-    build:
-      dockerfile: docker/proposer.Dockerfile
-      context: ..
-    image: ghcr.io/eyblockchain/nightfall3-proposer:latest
+    image: ghcr.io/fullkomnun/nightfall3-proposer:latest
     ports:
       # to use with postman and etc
       - 8092:8092

@@ -5,11 +5,13 @@ on:
     branches: [master]
 
 env:
-# Whitelisting is disabled during testing for backwards compatibility with these tests.  It must not be disabled in production.
+  # Whitelisting is disabled during testing for backwards compatibility with these tests.  It must not be disabled in production.
   WHITELISTING: disable
+  DOCKER_BUILDKIT: 1 # enable docker buildkit
 
 jobs:
   dependency-review:
+    if: ${{ false }}
     runs-on: ubuntu-20.04
     steps:
       - name: 'Checkout Repository'
@@ -26,7 +28,7 @@ jobs:
           node-version: '16.17.0'
       - name: eslint check
         run: |
-          npm ci
+          npm ci --install-links
           cd wallet/
           npm ci
           cd ..
@@ -41,10 +43,10 @@ jobs:
           node-version: '16.17.0'
       - name: General Tests
         run: |
-          npm ci
+          npm ci --install-links --no-audit
           npm run test-general-stuff
           cd common-files
-          npm ci
+          npm ci --install-links --no-audit
           npm run test
 
   unit-tests:
@@ -56,9 +58,9 @@ jobs:
           node-version: '16.17.0'
       - name: Unit Tests
         run: |
-          npm ci
+          npm ci --install-links --no-audit
           cd common-files
-          npm ci
+          npm ci --no-audit
           cd ../
           npm run unit-test
           MODULUS=$(cat test/_certificates/root_ca.pub_key.modulus) \
@@ -88,11 +90,11 @@ jobs:
 
       - name: Unit Circuit Tests
         run: |
-          npm ci
+          npm ci --install-links --no-audit
           cd common-files
-          npm ci
+          npm ci --no-audit
           cd ../nightfall-deployer
-          npm ci
+          npm ci --install-links --no-audit
           cd ../
           npm run unit-test-circuits
 
@@ -101,26 +103,53 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+          cache: 'npm'
+          cache-dependency-path: |
+            common-files/package-lock.json
+            cli/package-lock.json
+            package-lock.json
 
-      - name: Perform npm link
+      - name: Install dependencies
         run: |
           cd common-files
-          npm link
+          npm ci --no-audit
+          cd ../cli
+          npm ci --install-links --no-audit
           cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
+
+      - name: Restore cached Proving Files
+        id: cache-proving-files-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: proving_files/default
+          key:
+            proving-files-${{ hashFiles('docker/circom.Dockerfile',
+            'nightfall-deployer/circuits/**/*.circom') }}
+
+      - name: Toggle usage of cached proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit == 'true'
+        run: echo "PROVING_FILES=default" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> circuit-test.log &disown
+          ./bin/start-nightfall -g &> circuit-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -137,6 +166,17 @@ jobs:
       - name: Circuits Test
         run: |
           npm run test-circuits
+
+      - name: Export proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit != 'true'
+        run: ./bin/export-proving-files default
+
+      - name: Save Proving Files
+        id: cache-proving-files-save
+        uses: actions/cache/save@v3
+        with:
+          path: proving_files/default
+          key: ${{ steps.cache-proving-files-restore.outputs.cache-primary-key }}
 
       - name: Debug logs - after integration test run
         if: always()
@@ -158,26 +198,53 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+          cache: 'npm'
+          cache-dependency-path: |
+            common-files/package-lock.json
+            cli/package-lock.json
+            package-lock.json
 
-      - name: Perform npm link
+      - name: Install dependencies
         run: |
           cd common-files
-          npm link
+          npm ci --no-audit
+          cd ../cli
+          npm ci --install-links --no-audit
           cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
+
+      - name: Restore cached Proving Files
+        id: cache-proving-files-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: proving_files/default
+          key:
+            proving-files-${{ hashFiles('docker/circom.Dockerfile',
+            'nightfall-deployer/circuits/**/*.circom') }}
+
+      - name: Toggle usage of cached proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit == 'true'
+        run: echo "PROVING_FILES=default" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ganache-test.log &disown
+          ./bin/start-nightfall -g &> ganache-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -194,6 +261,17 @@ jobs:
       - name: Run integration test
         run: |
           npm run test-e2e-protocol
+
+      - name: Export proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit != 'true'
+        run: ./bin/export-proving-files default
+
+      - name: Save Proving Files
+        id: cache-proving-files-save
+        uses: actions/cache/save@v3
+        with:
+          path: proving_files/default
+          key: ${{ steps.cache-proving-files-restore.outputs.cache-primary-key }}
 
       - name: Debug logs - after integration test run
         if: always()
@@ -215,26 +293,53 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+          cache: 'npm'
+          cache-dependency-path: |
+            common-files/package-lock.json
+            cli/package-lock.json
+            package-lock.json
 
-      - name: Perform npm link
+      - name: Install dependencies
         run: |
           cd common-files
-          npm link
+          npm ci --no-audit
+          cd ../cli
+          npm ci --install-links --no-audit
           cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
+
+      - name: Restore cached Proving Files
+        id: cache-proving-files-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: proving_files/default
+          key:
+            proving-files-${{ hashFiles('docker/circom.Dockerfile',
+            'nightfall-deployer/circuits/**/*.circom') }}
+
+      - name: Toggle usage of cached proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit == 'true'
+        run: echo "PROVING_FILES=default" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ganache-test.log &disown
+          ./bin/start-nightfall -g &> ganache-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -251,6 +356,17 @@ jobs:
       - name: Run integration test
         run: |
           npm run test-erc20-tokens
+
+      - name: Export proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit != 'true'
+        run: ./bin/export-proving-files default
+
+      - name: Save Proving Files
+        id: cache-proving-files-save
+        uses: actions/cache/save@v3
+        with:
+          path: proving_files/default
+          key: ${{ steps.cache-proving-files-restore.outputs.cache-primary-key }}
 
       - name: Debug logs - after integration test run
         if: always()
@@ -272,26 +388,54 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    if: ${{ false }}
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+          cache: 'npm'
+          cache-dependency-path: |
+            common-files/package-lock.json
+            cli/package-lock.json
+            package-lock.json
 
-      - name: Perform npm link
+      - name: Install dependencies
         run: |
           cd common-files
-          npm link
+          npm ci --no-audit
+          cd ../cli
+          npm ci --install-links --no-audit
           cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
+
+      - name: Restore cached Proving Files
+        id: cache-proving-files-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: proving_files/default
+          key:
+            proving-files-${{ hashFiles('docker/circom.Dockerfile',
+            'nightfall-deployer/circuits/**/*.circom') }}
+
+      - name: Toggle usage of cached proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit == 'true'
+        run: echo "PROVING_FILES=default" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ganache-test.log &disown
+          ./bin/start-nightfall -g &> ganache-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -308,6 +452,17 @@ jobs:
       - name: Run integration test
         run: |
           npm run test-erc721-tokens
+
+      - name: Export proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit != 'true'
+        run: ./bin/export-proving-files default
+
+      - name: Save Proving Files
+        id: cache-proving-files-save
+        uses: actions/cache/save@v3
+        with:
+          path: proving_files/default
+          key: ${{ steps.cache-proving-files-restore.outputs.cache-primary-key }}
 
       - name: Debug logs - after integration test run
         if: always()
@@ -329,26 +484,54 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    if: ${{ false }}
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+          cache: 'npm'
+          cache-dependency-path: |
+            common-files/package-lock.json
+            cli/package-lock.json
+            package-lock.json
 
-      - name: Perform npm link
+      - name: Install dependencies
         run: |
           cd common-files
-          npm link
+          npm ci --no-audit
+          cd ../cli
+          npm ci --install-links --no-audit
           cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
+
+      - name: Restore cached Proving Files
+        id: cache-proving-files-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: proving_files/default
+          key:
+            proving-files-${{ hashFiles('docker/circom.Dockerfile',
+            'nightfall-deployer/circuits/**/*.circom') }}
+
+      - name: Toggle usage of cached proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit == 'true'
+        run: echo "PROVING_FILES=default" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ganache-test.log &disown
+          ./bin/start-nightfall -g &> ganache-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -365,6 +548,17 @@ jobs:
       - name: Run integration test
         run: |
           npm run test-erc1155-tokens
+
+      - name: Export proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit != 'true'
+        run: ./bin/export-proving-files default
+
+      - name: Save Proving Files
+        id: cache-proving-files-save
+        uses: actions/cache/save@v3
+        with:
+          path: proving_files/default
+          key: ${{ steps.cache-proving-files-restore.outputs.cache-primary-key }}
 
       - name: Debug logs - after integration test run
         if: always()
@@ -386,27 +580,54 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    if: ${{ false }}
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+          cache: 'npm'
+          cache-dependency-path: |
+            common-files/package-lock.json
+            cli/package-lock.json
+            package-lock.json
 
-      - name: Perform npm link
+      - name: Install dependencies
         run: |
           cd common-files
-          npm link
+          npm ci --no-audit
+          cd ../cli
+          npm ci --install-links --no-audit
           cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          npm ci
-          cd ..
+
+      - name: Restore cached Proving Files
+        id: cache-proving-files-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: proving_files/default
+          key:
+            proving-files-${{ hashFiles('docker/circom.Dockerfile',
+            'nightfall-deployer/circuits/**/*.circom') }}
+
+      - name: Toggle usage of cached proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit == 'true'
+        run: echo "PROVING_FILES=default" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ganache-test.log &disown
+          ./bin/start-nightfall -g &> ganache-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -424,6 +645,17 @@ jobs:
         run: |
           npm run test-l2tokenisation
 
+      - name: Export proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit != 'true'
+        run: ./bin/export-proving-files default
+
+      - name: Save Proving Files
+        id: cache-proving-files-save
+        uses: actions/cache/save@v3
+        with:
+          path: proving_files/default
+          key: ${{ steps.cache-proving-files-restore.outputs.cache-primary-key }}
+
       - name: Debug logs - after integration test run
         if: always()
         run: cat ganache-test.log
@@ -438,32 +670,61 @@ jobs:
         with:
           name: ganache-test-logs
           path: ./ganache-test.log
+
   x509-test:
     env:
       WHITELISTING: enable
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    if: ${{ false }}
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+          cache: 'npm'
+          cache-dependency-path: |
+            common-files/package-lock.json
+            cli/package-lock.json
+            package-lock.json
 
-      - name: Perform npm link
+      - name: Install dependencies
         run: |
           cd common-files
-          npm link
+          npm ci --no-audit
+          cd ../cli
+          npm ci --install-links --no-audit
           cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
+
+      - name: Restore cached Proving Files
+        id: cache-proving-files-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: proving_files/default
+          key:
+            proving-files-${{ hashFiles('docker/circom.Dockerfile',
+            'nightfall-deployer/circuits/**/*.circom') }}
+
+      - name: Toggle usage of cached proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit == 'true'
+        run: echo "PROVING_FILES=default" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> x509-test.log &disown
+          ./bin/start-nightfall -g &> x509-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -479,6 +740,17 @@ jobs:
 
       - name: Run integration test
         run: npm run test-x509
+
+      - name: Export proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit != 'true'
+        run: ./bin/export-proving-files default
+
+      - name: Save Proving Files
+        id: cache-proving-files-save
+        uses: actions/cache/save@v3
+        with:
+          path: proving_files/default
+          key: ${{ steps.cache-proving-files-restore.outputs.cache-primary-key }}
 
       - name: Debug logs - after integration test run
         if: always()
@@ -497,6 +769,11 @@ jobs:
 
   administrator-test:
     runs-on: ubuntu-20.04
+    if: ${{ false }}
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: administrator,blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
@@ -505,21 +782,44 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+          cache: 'npm'
+          cache-dependency-path: |
+            common-files/package-lock.json
+            cli/package-lock.json
+            package-lock.json
 
-      - name: Perform npm link
+      - name: Install dependencies
         run: |
           cd common-files
-          npm link
+          npm ci --no-audit
+          cd ../cli
+          npm ci --install-links --no-audit
           cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
+
+      - name: Restore cached Proving Files
+        id: cache-proving-files-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: proving_files/default
+          key:
+            proving-files-${{ hashFiles('docker/circom.Dockerfile',
+            'nightfall-deployer/circuits/**/*.circom') }}
+
+      - name: Toggle usage of cached proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit == 'true'
+        run: echo "PROVING_FILES=default" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> administrator-test.log &disown
+          ./bin/start-nightfall -g &> administrator-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -536,6 +836,17 @@ jobs:
       - name: Run integration test
         run: |
           npm run test-administrator
+
+      - name: Export proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit != 'true'
+        run: ./bin/export-proving-files default
+
+      - name: Save Proving Files
+        id: cache-proving-files-save
+        uses: actions/cache/save@v3
+        with:
+          path: proving_files/default
+          key: ${{ steps.cache-proving-files-restore.outputs.cache-primary-key }}
 
       - name: Debug logs - after integration test run
         if: always()
@@ -554,29 +865,57 @@ jobs:
 
   optimist-sync-test:
     runs-on: ubuntu-18.04
+    if: ${{ false }}
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+          cache: 'npm'
+          cache-dependency-path: |
+            common-files/package-lock.json
+            cli/package-lock.json
+            package-lock.json
 
-      - name: Perform npm link
+      - name: Install dependencies
         run: |
           cd common-files
-          npm link
+          npm ci --no-audit
+          cd ../cli
+          npm ci --install-links --no-audit
           cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
+
+      - name: Restore cached Proving Files
+        id: cache-proving-files-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: proving_files/default
+          key:
+            proving-files-${{ hashFiles('docker/circom.Dockerfile',
+            'nightfall-deployer/circuits/**/*.circom') }}
+
+      - name: Toggle usage of cached proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit == 'true'
+        run: echo "PROVING_FILES=default" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> optimist-sync-test.log &disown
+          ./bin/start-nightfall -g &> optimist-sync-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -593,6 +932,17 @@ jobs:
       - name: Run optimist sync test
         run: |
           npm run test-optimist-sync
+
+      - name: Export proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit != 'true'
+        run: ./bin/export-proving-files default
+
+      - name: Save Proving Files
+        id: cache-proving-files-save
+        uses: actions/cache/save@v3
+        with:
+          path: proving_files/default
+          key: ${{ steps.cache-proving-files-restore.outputs.cache-primary-key }}
 
       - name: Debug logs - after optimist sync test run
         if: always()
@@ -612,12 +962,51 @@ jobs:
   adversary-test:
     env:
       CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker,lazy-optimist,bad-client,mongodb-adversary
     runs-on: ubuntu-20.04
+    if: ${{ false }}
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+          cache: 'npm'
+          cache-dependency-path: |
+            common-files/package-lock.json
+            cli/package-lock.json
+            package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd common-files
+          npm ci --no-audit
+          cd ../cli
+          npm ci --install-links --no-audit
+          cd ..
+
+      - name: Restore cached Proving Files
+        id: cache-proving-files-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: proving_files/default
+          key:
+            proving-files-${{ hashFiles('docker/circom.Dockerfile',
+            'nightfall-deployer/circuits/**/*.circom') }}
+
+      - name: Toggle usage of cached proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit == 'true'
+        run: echo "PROVING_FILES=default" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build adversary
         run: npm run build-adversary
@@ -625,7 +1014,7 @@ jobs:
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d -a &> adversary-test.log &disown
+          ./bin/start-nightfall -g -a &> adversary-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -642,6 +1031,17 @@ jobs:
       - name: Run adversary test
         run: |
           VERBOSE=true npm run test-adversary
+
+      - name: Export proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit != 'true'
+        run: ./bin/export-proving-files default
+
+      - name: Save Proving Files
+        id: cache-proving-files-save
+        uses: actions/cache/save@v3
+        with:
+          path: proving_files/default
+          key: ${{ steps.cache-proving-files-restore.outputs.cache-primary-key }}
 
       - name: debug logs - after integration test run
         if: always()
@@ -662,23 +1062,51 @@ jobs:
   ping-pong-test:
     env:
       CONFIRMATIONS: 1
-      NF_SERVICES_TO_START: blockchain,deployer,worker
+      NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker,hosted-utils-api-server,proposer,challenger
     runs-on: ubuntu-20.04
+    if: ${{ false }}
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+          cache: 'npm'
+          cache-dependency-path: |
+            common-files/package-lock.json
+            cli/package-lock.json
+            package-lock.json
 
-      - name: Perform npm link
+      - name: Install dependencies
         run: |
           cd common-files
-          npm link
+          npm ci --no-audit
+          cd ../cli
+          npm ci --install-links --no-audit
           cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
+
+      - name: Restore cached Proving Files
+        id: cache-proving-files-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: proving_files/default
+          key:
+            proving-files-${{ hashFiles('docker/circom.Dockerfile',
+            'nightfall-deployer/circuits/**/*.circom') }}
+
+      - name: Toggle usage of cached proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit == 'true'
+        run: echo "PROVING_FILES=default" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build adversary
         run: npm run build-adversary
@@ -718,9 +1146,20 @@ jobs:
 
       - name: Run ping-pong test
         run: |
-          npm ci
+          npm ci --install-links --no-audit
           docker wait nightfall_3_deployer_1
           npm run ping-pong
+
+      - name: Export proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit != 'true'
+        run: ./bin/export-proving-files default
+
+      - name: Save Proving Files
+        id: cache-proving-files-save
+        uses: actions/cache/save@v3
+        with:
+          path: proving_files/default
+          key: ${{ steps.cache-proving-files-restore.outputs.cache-primary-key }}
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
@@ -744,27 +1183,55 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     name: check gas transactions per block
+    if: ${{ false }}
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+          cache: 'npm'
+          cache-dependency-path: |
+            common-files/package-lock.json
+            cli/package-lock.json
+            package-lock.json
 
-      - name: Perform npm link
+      - name: Install dependencies
         run: |
           cd common-files
-          npm link
+          npm ci --no-audit
+          cd ../cli
+          npm ci --install-links --no-audit
           cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
+
+      - name: Restore cached Proving Files
+        id: cache-proving-files-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: proving_files/default
+          key:
+            proving-files-${{ hashFiles('docker/circom.Dockerfile',
+            'nightfall-deployer/circuits/**/*.circom') }}
+
+      - name: Toggle usage of cached proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit == 'true'
+        run: echo "PROVING_FILES=default" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers with ganache
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> test-gas.log &disown
+          ./bin/start-nightfall -g &> test-gas.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -781,6 +1248,17 @@ jobs:
       - name: Run tx-gas.mjs test suites
         run: |
           VERBOSE=true npm run test-gas
+
+      - name: Export proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit != 'true'
+        run: ./bin/export-proving-files default
+
+      - name: Save Proving Files
+        id: cache-proving-files-save
+        uses: actions/cache/save@v3
+        with:
+          path: proving_files/default
+          key: ${{ steps.cache-proving-files-restore.outputs.cache-primary-key }}
 
       - name: Debug logs - after integration test run
         if: always()
@@ -799,29 +1277,57 @@ jobs:
 
   test-apps:
     name: check apps for liveliness
+    if: ${{ false }}
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write # for docker gha cache
+      contents: read
+      packages: read
     env:
-      NF_SERVICES_TO_START: blockchain,deployer,optimist,worker
+      NF_SERVICES_TO_START: blockchain,deployer,optimist,worker,proposer
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+          cache: 'npm'
+          cache-dependency-path: |
+            common-files/package-lock.json
+            cli/package-lock.json
+            package-lock.json
 
-      - name: Perform npm link
+      - name: Install dependencies
         run: |
           cd common-files
-          npm link
+          npm ci --no-audit
+          cd ../cli
+          npm ci --install-links --no-audit
           cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
+
+      - name: Restore cached Proving Files
+        id: cache-proving-files-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: proving_files/default
+          key:
+            proving-files-${{ hashFiles('docker/circom.Dockerfile',
+            'nightfall-deployer/circuits/**/*.circom') }}
+
+      - name: Toggle usage of cached proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit == 'true'
+        run: echo "PROVING_FILES=default" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers with ganache
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> test-apps.log &disown
+          ./bin/start-nightfall -g &> test-apps.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -848,6 +1354,17 @@ jobs:
           attempt_limit: 10
           attempt_delay: 30000
 
+      - name: Export proving files
+        if: steps.cache-proving-files-restore.outputs.cache-hit != 'true'
+        run: ./bin/export-proving-files default
+
+      - name: Save Proving Files
+        id: cache-proving-files-save
+        uses: actions/cache/save@v3
+        with:
+          path: proving_files/default
+          key: ${{ steps.cache-proving-files-restore.outputs.cache-primary-key }}
+
       - name: Debug logs - after integration test run
         if: always()
         run: cat test-apps.log
@@ -865,6 +1382,7 @@ jobs:
 
   test-client:
     name: check client for liveliness
+    if: ${{ false }}
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -877,6 +1395,13 @@ jobs:
           echo "ETH_NETWORK=goerli" > ./nightfall-client/client.env
           echo "BLOCKCHAIN_WS_HOST=${{ secrets.GOERLI_ALCHEMY }}" >> ./nightfall-client/client.env
           cat ./nightfall-client/client.env
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start client
         run: |
@@ -919,3 +1444,13 @@ jobs:
         with:
           name: test-client-logs
           path: ./test-client.log
+
+  build-and-push:
+    strategy:
+      matrix:
+        component: ['optimist', 'proposer']
+    uses: ./.github/workflows/reusable_docker-build-and-push.yaml
+    secrets: inherit # pass all secrets to the called workflow
+    with:
+      publish: true
+      component: ${{ matrix.component }}

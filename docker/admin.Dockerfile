@@ -1,31 +1,33 @@
-FROM node:16.17
+FROM node:16.17-bullseye-slim as builder
 
-RUN apt-get update -y
-RUN apt-get install -y netcat
+# 'node-gyp' requires 'python3', 'make' and 'g++''
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
 
-ENTRYPOINT ["/app/admin/docker-entrypoint.sh"]
+COPY common-files common-files
 
 WORKDIR /app
-COPY common-files common-files
-COPY cli cli
+COPY nightfall-administrator/package*.json ./
+RUN npm ci --install-links --no-audit && npm cache clean --force
 
-WORKDIR /app/common-files
-RUN npm ci
-RUN npm link
+FROM node:16.17-bullseye-slim
 
+# entrypoint script requires 'netcat'
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app/cli
-RUN npm ci
+EXPOSE 80 9229
 
-WORKDIR /app/admin
-COPY config/default.js config/default.js
-COPY nightfall-administrator/src src
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+
+WORKDIR /app
+COPY --from=builder /app/node_modules ./node_modules/
 COPY nightfall-administrator/docker-entrypoint.sh nightfall-administrator/package*.json nightfall-administrator/admin ./
-
-RUN npm ci
-
-COPY common-files/classes node_modules/@polygon-nightfall/common-files/classes
-COPY common-files/utils node_modules/@polygon-nightfall/common-files/utils
-COPY common-files/constants node_modules/@polygon-nightfall/common-files/constants
+COPY nightfall-administrator/src src
+COPY config/default.js config/default.js
 
 CMD ["sleep", "infinity"]

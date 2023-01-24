@@ -8,7 +8,7 @@
     "build": "babel lib -d build"
   },
   "dependencies": {
-    "@polygon-nightfall/common-files": "*",
+    "@polygon-nightfall/common-files": "file:../common-files",
     "async-mutex": "^0.3.2",
     "axios": "^0.21.4",
     "bip39": "^3.0.4",

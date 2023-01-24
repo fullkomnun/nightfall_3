@@ -3,10 +3,7 @@ version: '3.5'
 services:
   # Temporary container to deploy contracts and circuits and populate volumes
   deployer:
-    image: ghcr.io/eyblockchain/nightfall3-deployer:latest
-    build:
-      dockerfile: docker/deployer.Dockerfile
-      context: ..
+    image: ghcr.io/fullkomnun/nightfall3-deployer:latest
     volumes:
       - type: volume
         source: build
@@ -54,9 +51,7 @@ services:
       TEST_SANCTIONS_CONTRACT: 'mock'
 
   hosted-utils-api-server:
-    build:
-      dockerfile: docker/hosted-utils-api-server.Dockerfile
-      context: ..
+    image: ghcr.io/fullkomnun/nightfall3-hosted-utils-api-server:latest
     depends_on:
       - worker
     ports:
@@ -67,10 +62,7 @@ services:
         target: /app/public/
 
   worker:
-    image: ghcr.io/eyblockchain/nightfall3-worker:latest
-    build:
-      dockerfile: docker/worker.Dockerfile
-      context: ..
+    image: ghcr.io/fullkomnun/nightfall3-worker:latest
     volumes:
       - type: volume
         source: proving_files
@@ -100,9 +92,7 @@ services:
       MPC: ${MPC}
 
   client_1:
-    build:
-      dockerfile: docker/client.Dockerfile
-      context: ..
+    image: ghcr.io/fullkomnun/nightfall3-client:latest
     container_name: client_1
     volumes:
       - type: volume
@@ -135,9 +125,7 @@ services:
     command: ['npm', 'run', 'dev']
 
   client_2:
-    build:
-      dockerfile: docker/client.Dockerfile
-      context: ..
+    image: ghcr.io/fullkomnun/nightfall3-client:latest
     container_name: client_2
     volumes:
       - type: volume
@@ -182,9 +170,7 @@ services:
     command: ['npm', 'run', 'dev']
 
   proposer_optimist_1:
-    build:
-      dockerfile: docker/optimist.Dockerfile
-      context: ..
+    image: ghcr.io/fullkomnun/nightfall3-optimist:latest
     container_name: proposer_optimist_1
     depends_on:
       - optimist_mongodb_1
@@ -215,9 +201,7 @@ services:
     command: ['npm', 'run', 'dev']
 
   proposer_optimist_2:
-    build:
-      dockerfile: docker/optimist.Dockerfile
-      context: ..
+    image: ghcr.io/fullkomnun/nightfall3-optimist:latest
     container_name: proposer_optimist_2
     depends_on:
       - optimist_mongodb_2
@@ -287,9 +271,7 @@ services:
         target: /data/db
 
   proposer_1:
-    build:
-      dockerfile: docker/proposer.Dockerfile
-      context: ..
+    image: ghcr.io/fullkomnun/nightfall3-proposer:latest
     container_name: proposer_1
     depends_on:
       - proposer_optimist_1
@@ -315,9 +297,7 @@ services:
         target: /app/src
 
   proposer_2:
-    build:
-      dockerfile: docker/proposer.Dockerfile
-      context: ..
+    image: ghcr.io/fullkomnun/nightfall3-proposer:latest
     container_name: proposer_2
     depends_on:
       - proposer_optimist_2
@@ -343,9 +323,7 @@ services:
         target: /app/src
 
   challenger_1:
-    build:
-      dockerfile: docker/challenger.Dockerfile
-      context: ..
+    image: ghcr.io/fullkomnun/nightfall3-challenger
     container_name: challenger_1
     depends_on:
       - proposer_optimist_1

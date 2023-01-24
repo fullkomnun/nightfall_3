@@ -1,0 +1,26 @@
+#! /bin/bash
+
+set -e
+
+usage()
+{
+  echo "Usage:"
+  echo "./bin/export-proving-files <proving_files folder>"
+}
+# select a folder to backup proving-files
+if [ -z "$1" ]; then
+  usage
+  exit 1
+fi
+
+PROVING_FILES_FOLDER=proving_files/${1}
+if [ -d "${PROVING_FILES_FOLDER}" ]; then
+  echo "${PROVING_FILES_FOLDER} already exists"
+  exit 1
+fi
+
+mkdir -p "$PROVING_FILES_FOLDER"
+WORKER=$(docker ps | grep nightfall_3_worker_1 | awk '{print $1}')
+docker cp "$WORKER":/app/output/. ./"${PROVING_FILES_FOLDER}"
+echo "proving files exported"
+ls "${PROVING_FILES_FOLDER}"

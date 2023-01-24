@@ -1,15 +1,16 @@
-FROM node:16.17
+FROM node:16.17-bullseye-slim
 
-RUN apt-get update -y
-RUN apt-get install -y md5deep
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    md5deep \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY hosted-utils-api-server/src src
-COPY hosted-utils-api-server/package.json package-lock.json ./
-COPY hosted-utils-api-server/entrypoint.sh entrypoint.sh
-
-RUN npm ci
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit && npm cache clean --force
+COPY src src
+COPY entrypoint.sh ./
 
 EXPOSE 80 9229
 

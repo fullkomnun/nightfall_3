@@ -2,9 +2,7 @@ version: '3.5'
 # Use this script for making an adversary service
 services:
   lazy-optimist:
-    build:
-      dockerfile: docker/optimist.Dockerfile
-      context: ..
+    image: ghcr.io/fullkomnun/nightfall3-optimist:latest
     depends_on:
       - mongodb-adversary
     networks:
@@ -45,9 +43,7 @@ services:
     command: ['npm', 'run', 'dev']
 
   bad-client:
-    build:
-      dockerfile: docker/client.Dockerfile
-      context: ..
+    image: ghcr.io/fullkomnun/nightfall3-client:latest
     depends_on:
       - mongodb-adversary
     networks:

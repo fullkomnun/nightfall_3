@@ -22,8 +22,8 @@ BUILDKIT_CACHING=()
 if [[ -n "$GITHUB_ACTIONS" ]]; then 
   export ACTIONS_CACHE_URL=$(echo "$ACTIONS_ID_TOKEN_REQUEST_URL" | grep -Po 'https://[^/]+/[^/]+/' | sed  's/pipelines/artifactcache/')
   export ACTIONS_RUNTIME_TOKEN=$ACTIONS_ID_TOKEN_REQUEST_TOKEN
-  BUILDKIT_CACHING=(--load --cache-from type=gha)
-  docker buildx create --use --driver=docker-container
+  BUILDKIT_CACHING=(--load --cache-from type=gha --cache-to type=gha,mode=max)
+  docker buildx create --driver=docker-container --use --bootstrap --buildkitd-flags --allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host
 fi
 
 #docker $BUILDKIT build $NO_CACHE_FLAG  "${BUILDKIT_CACHING[@]}" -t ghcr.io/fullkomnun/local-circom - < docker/circom.Dockerfile

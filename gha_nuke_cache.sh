@@ -11,12 +11,12 @@ while :
 do
     line=$(curl -G \
         -H "Accept: application/vnd.github.v3+json" \
-        -H "Authorization: token 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" \
+        -H "Authorization: token ${GH_PAT}" \
         -d per_page=100 \
         -d sort=size_in_bytes \
-        https://api.github.com/repos/fullkomnun/nightfall_3/actions/caches | jq -r '."actions_caches"[].id' | tr "\n" " ")
+        https://api.github.com/repos/"${USER}"/nightfall_3/actions/caches | jq -r '."actions_caches"[].id' | tr "\n" " ")
 
-    read -a -r ids <<< "$line"
+    read -a ids <<< "$line"
     if [ ${#ids[@]} -eq 0 ]; then
         echo "gha cache has been nuked!"
         exit 0
@@ -27,7 +27,7 @@ do
         curl \
             -X DELETE \
             -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: token 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" \
+            -H "Authorization: token ${GH_PAT}" \
             https://api.github.com/repos/"${USER}"/"${REPO}"/actions/caches/"${id}"
     done
     sleep 2

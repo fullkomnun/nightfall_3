@@ -7,14 +7,33 @@ import '@openzeppelin/hardhat-upgrades';
 import 'solidity-coverage';
 import 'hardhat-gas-reporter';
 
+const optimizerDefaultSettings = {
+  enabled: true,
+  runs: 10000,
+  details: {
+    peephole: true,
+    inliner: true,
+    jumpdestRemover: true,
+    orderLiterals: true,
+    deduplicate: true,
+    cse: true,
+    constantOptimizer: true,
+    yulDetails: {
+      stackAllocation: true,
+      optimizerSteps:
+        'dhfoDgvulfnTUtnIf[xa[r]EscLMcCTUtTOntnfDIulLculVcul [j]Tpeulxa[rul]xa[r]cLgvifCTUca[r]LSsTOtfDnca[r]Iulc]jmul[jul] VcTOcul jmul',
+    },
+  },
+};
+
 const config: HardhatUserConfig = {
   solidity: {
     version: '0.8.17',
     settings: {
       optimizer: {
-        enabled: true,
-        runs: 200,
+        ...optimizerDefaultSettings,
       },
+      viaIR: true,
     },
   },
   gasReporter: { enabled: true },

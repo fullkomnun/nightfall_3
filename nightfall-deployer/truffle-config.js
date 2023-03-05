@@ -22,6 +22,25 @@
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const config = require('config');
 
+const optimizerDefaultSettings = {
+  enabled: true,
+  runs: 10000,
+  details: {
+    peephole: true,
+    inliner: true,
+    jumpdestRemover: true,
+    orderLiterals: true,
+    deduplicate: true,
+    cse: true,
+    constantOptimizer: true,
+    yulDetails: {
+      stackAllocation: true,
+      optimizerSteps:
+        'dhfoDgvulfnTUtnIf[xa[r]EscLMcCTUtTOntnfDIulLculVcul [j]Tpeulxa[rul]xa[r]cLgvifCTUca[r]LSsTOtfDnca[r]Iulc]jmul[jul] VcTOcul jmul',
+    },
+  },
+};
+
 module.exports = {
   /**
    * Networks define how you connect to your ethereum client and let you set the
@@ -135,9 +154,9 @@ module.exports = {
       settings: {
         // See the solidity docs for advice about optimization and evmVersion
         optimizer: {
-          enabled: true,
-          runs: 1,
+          ...optimizerDefaultSettings,
         },
+        viaIR: true,
       },
     },
   },

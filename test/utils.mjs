@@ -151,7 +151,7 @@ export class Web3Client {
       await new Promise(resolve => {
         const id = setInterval(async () => {
           const block = await this.web3.eth.getBlock('latest');
-          if (block.number - startBlock.number > 12) {
+          if (block.number - startBlock.number > 1) {
             clearInterval(id);
             resolve();
           }
@@ -237,7 +237,7 @@ export class Web3Client {
 
     await this.subscribeTo('newBlockHeaders', blockHeaders);
 
-    while (blockHeaders.length < 12) {
+    while (blockHeaders.length < 1) {
       await waitForTimeout(3000);
     }
 

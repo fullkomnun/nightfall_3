@@ -10,6 +10,7 @@
 import chai from 'chai';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
+import sinon from 'sinon';
 import Nf3 from '../cli/lib/nf3.mjs';
 
 import { getLayer2Balances, Web3Client } from './utils.mjs';
@@ -38,7 +39,7 @@ async function makeBlock() {
 }
 
 async function logProposerStats() {
-  logger.info(`proposer stake: ${JSON.stringify(await nf3Proposer.getProposerStake())}`);
+  logger.info(`proposer stake: ${JSON.stringify(nf3Proposer.getProposerStake())}`);
   const web3 = nf3Proposer.getWeb3Provider();
   logger.info(
     `-- proposer account balance ---
@@ -47,6 +48,7 @@ async function logProposerStats() {
 }
 
 describe('Periodic Payment', () => {
+  let clock;
   let erc20Address;
 
   before(async () => {
@@ -60,7 +62,7 @@ describe('Periodic Payment', () => {
     );
     await nf3Proposer.registerProposer(
       'http://http://localhost:8081',
-      await nf3Proposer.getMinimumStake(),
+      nf3Proposer.getMinimumStake(),
     );
     await nf3Proposer.startProposer();
 
@@ -70,7 +72,14 @@ describe('Periodic Payment', () => {
     logProposerStats();
   });
 
-  afterEach(async () => logProposerStats());
+  beforeEach(() => {
+    clock = sinon.useFakeTimers();
+  });
+
+  afterEach(async () => {
+    clock.restore();
+    return logProposerStats();
+  });
 
   it('Do 2 Deposit and make 2 blocks', async function () {
     const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
@@ -85,7 +94,7 @@ describe('Periodic Payment', () => {
   });
 
   it('Should do request for payment for two blocks', async () => {
-    const blockHashs = (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash);
+    const blockHashs = nf3Proposer.getProposerPendingPayments().map(rec => rec.blockHash);
     await web3Client.timeJump(3600 * 24 * 10);
     for (const blockHash of blockHashs) {
       await nf3Proposer.requestBlockPayment(blockHash);
@@ -96,7 +105,8 @@ describe('Periodic Payment', () => {
 
   it('Start periodic payment job', async () => {
     nf3Proposer.startPeriodicPayment('*/03 * * * *'); // At every 3rd minute
-    await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
+    // await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
+    await clock.tickAsync(300_000); // wait till cron job trigger next and does it job
     const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
     expect(Number(feesL2)).to.be.equal(0);
   });
@@ -115,12 +125,13 @@ describe('Periodic Payment', () => {
     });
 
     it('Should do request for block payment and succesful withdraw', async () => {
-      const blockHashs = (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash);
+      const blockHashs = nf3Proposer.getProposerPendingPayments().map(rec => rec.blockHash);
       await web3Client.timeJump(3600 * 24 * 10);
       for (const blockHash of blockHashs) {
         await nf3Proposer.requestBlockPayment(blockHash);
       }
-      await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
+      // await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
+      await clock.tickAsync(300_000); // wait till cron job trigger next and does it job
       const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
       expect(Number(feesL2)).to.be.equal(0);
     });
@@ -146,14 +157,13 @@ describe('Periodic Payment', () => {
       });
 
       it('Should do request for block payment and unsuccesful withdraw', async () => {
-        const blockHashs = (await nf3Proposer.getProposerPendingPayments()).map(
-          rec => rec.blockHash,
-        );
+        const blockHashs = nf3Proposer.getProposerPendingPayments().map(rec => rec.blockHash);
         await web3Client.timeJump(3600 * 24 * 10);
         for (const blockHash of blockHashs) {
           await nf3Proposer.requestBlockPayment(blockHash);
         }
-        await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
+        // await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
+        await clock.tickAsync(300_000); // wait till cron job trigger next and does it job
         const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
         expect(Number(feesL2)).to.be.equal(2); // could not withdraw because limit is 3 now
       });
@@ -164,9 +174,10 @@ describe('Periodic Payment', () => {
         await makeBlock();
         await web3Client.timeJump(3600 * 24 * 10);
         await nf3Proposer.requestBlockPayment(
-          (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash)[0],
+          nf3Proposer.getProposerPendingPayments().map(rec => rec.blockHash)[0],
         );
-        await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
+        // await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
+        await clock.tickAsync(300_000); // wait till cron job trigger next and does it job
         const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
         expect(Number(feesL2)).to.be.equal(0);
       });
@@ -195,12 +206,13 @@ describe('Periodic Payment', () => {
     });
 
     it('Should do request for block payment and then add in pendingWithdraw', async () => {
-      const blockHashs = (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash);
+      const blockHashs = nf3Proposer.getProposerPendingPayments().map(rec => rec.blockHash);
       await web3Client.timeJump(3600 * 24 * 10);
       for (const blockHash of blockHashs) {
         await nf3Proposer.requestBlockPayment(blockHash);
       }
-      await new Promise(reslove => setTimeout(reslove, 600000)); // wait till cron job trigger next and does it job (if cron job exist)
+      // await new Promise(reslove => setTimeout(reslove, 600000)); // wait till cron job trigger next and does it job (if cron job exist)
+      await clock.tickAsync(600_000); // wait till cron job trigger next and does it job
       const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
       expect(Number(feesL2)).to.be.equal(2);
     });
@@ -217,7 +229,8 @@ describe('Periodic Payment', () => {
 
     it('Start periodic payment job', async () => {
       nf3Proposer.startPeriodicPayment('*/01 * * * *'); // At every minute
-      await new Promise(reslove => setTimeout(reslove, 100000)); // wait till cron job trigger next and does it job
+      // await new Promise(reslove => setTimeout(reslove, 100000)); // wait till cron job trigger next and does it job
+      await clock.tickAsync(100_000); // wait till cron job trigger next and does it job
       const { feesL1, feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
       expect(Number(feesL1)).to.be.equal(0);
       expect(Number(feesL2)).to.be.equal(0);
@@ -226,8 +239,8 @@ describe('Periodic Payment', () => {
 
   after(async () => {
     nf3Proposer.stopPeriodicPayment();
-    await nf3Proposer.close();
-    await nf3User.close();
+    nf3Proposer.close();
+    nf3User.close();
     web3Client.closeWeb3();
   });
 });

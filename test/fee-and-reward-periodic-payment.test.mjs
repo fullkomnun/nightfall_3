@@ -52,6 +52,7 @@ describe('Periodic Payment', () => {
   let erc20Address;
 
   before(async () => {
+    clock = sinon.useFakeTimers();
     await nf3User.init(mnemonics.user1);
     await nf3Proposer.init(mnemonics.proposer);
     await nf3Proposer.setWeb3Provider();
@@ -72,14 +73,7 @@ describe('Periodic Payment', () => {
     logProposerStats();
   });
 
-  beforeEach(() => {
-    clock = sinon.useFakeTimers();
-  });
-
-  afterEach(async () => {
-    clock.restore();
-    return logProposerStats();
-  });
+  afterEach(async () => logProposerStats());
 
   it('Do 2 Deposit and make 2 blocks', async function () {
     const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
@@ -238,5 +232,6 @@ describe('Periodic Payment', () => {
     await nf3Proposer.close();
     await nf3User.close();
     web3Client.closeWeb3();
+    clock.restore();
   });
 });

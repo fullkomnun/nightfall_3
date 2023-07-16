@@ -53,9 +53,8 @@ describe('Periodic Payment', () => {
 
   before(async () => {
     clock = sinon.useFakeTimers({
+      now: Date.now(),
       shouldAdvanceTime: true,
-      advanceTimeDelta: 500,
-      shouldClearNativeTimers: true,
     });
     await nf3User.init(mnemonics.user1);
     await nf3Proposer.init(mnemonics.proposer);

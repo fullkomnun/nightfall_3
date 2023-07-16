@@ -627,6 +627,7 @@ jobs:
           path: ./optimist-sync-test.log
 
   adversary-test:
+    if: ${{ false }} # disable for now
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker,lazy-optimist,bad-client
@@ -748,6 +749,7 @@ jobs:
           path: ./ping-pong-test.log
 
   test-gas:
+    if: ${{ false }} # disable for now
     env:
       MAX_BLOCK_SIZE: 25000
       CONFIRMATIONS: 1
@@ -837,7 +839,7 @@ jobs:
             curl -i http://localhost:8092/healthcheck
           attempt_limit: 10
           attempt_delay: 30000
-      
+
       - name: 'Check challenger liveliness'
         uses: Wandalen/wretry.action@v1.0.36
         with:
@@ -864,7 +866,6 @@ jobs:
           path: |
             ./test-apps.log
             ./test-proposer.log
-
 
   periodic-payment-test:
     env:

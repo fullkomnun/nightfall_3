@@ -52,7 +52,11 @@ describe('Periodic Payment', () => {
   let erc20Address;
 
   before(async () => {
-    clock = sinon.useFakeTimers();
+    clock = sinon.useFakeTimers({
+      shouldAdvanceTime: true,
+      advanceTimeDelta: 500,
+      shouldClearNativeTimers: true,
+    });
     await nf3User.init(mnemonics.user1);
     await nf3Proposer.init(mnemonics.proposer);
     await nf3Proposer.setWeb3Provider();

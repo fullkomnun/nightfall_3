@@ -106,40 +106,42 @@ function unpauseQueue(priority) {
  */
 function waitForConfirmation(eventObject) {
   logger.debug({ msg: 'Confirming event', event: eventObject.event });
-
   const { transactionHash, blockNumber } = eventObject;
+
   return new Promise((resolve, reject) => {
     let confirmedBlocks = 0;
-    const id = setInterval(async () => {
-      /*
-        get the transaction that caused the event
-        if it's been in a chain reorg then it will have been removed.
-       */
-      if (removed[transactionHash] > 0) {
-        clearInterval(id);
-        removed[eventObject.transactionHash]--;
-        reject(
-          new Error(
-            `Event removed; probable chain reorg.  Event was ${eventObject.event}, transaction hash was ${transactionHash}`,
-          ),
-        );
-      }
-      const currentBlock = await web3.eth.getBlock('latest');
-      if (currentBlock.number - blockNumber > confirmedBlocks) {
-        confirmedBlocks = currentBlock.number - blockNumber;
-      }
-      if (confirmedBlocks >= CONFIRMATIONS) {
-        clearInterval(id);
+    // TODO: handle also 'error' and 'connected' events for subscription?
+    const newBlocksSubscription = web3.eth
+      .subscribe('newBlockHeaders')
+      .on('data', function (currentBlock) {
+        /*
+         get the transaction that caused the event
+         if it's been in a chain reorg then it will have been removed.
+        */
+        if (removed[transactionHash] > 0) {
+          newBlocksSubscription.unsubscribe();
+          removed[eventObject.transactionHash]--;
+          reject(
+            new Error(
+              `Event removed; probable chain reorg.  Event was ${eventObject.event}, transaction hash was ${transactionHash}`,
+            ),
+          );
+        }
 
-        logger.debug({
-          msg: 'Event has been confirmed',
-          event: eventObject.event,
-          total: currentBlock.number - blockNumber,
-        });
+        if (currentBlock.number - blockNumber > confirmedBlocks) {
+          confirmedBlocks = currentBlock.number - blockNumber;
+        }
 
-        resolve(eventObject);
-      }
-    }, CONFIRMATION_POLL_TIME);
+        if (confirmedBlocks >= CONFIRMATIONS) {
+          newBlocksSubscription.unsubscribe();
+          logger.debug({
+            msg: 'Event has been confirmed',
+            event: eventObject.event,
+            total: currentBlock.number - blockNumber,
+          });
+          resolve(eventObject);
+        }
+      });
   });
 }
 

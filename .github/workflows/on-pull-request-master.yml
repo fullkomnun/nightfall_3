@@ -11,16 +11,13 @@ env:
 
 jobs:
   dependency-review:
-    if: ${{ false }}
     runs-on: ubuntu-20.04
     steps:
       - name: 'Checkout Repository'
         uses: actions/checkout@v3
       - name: 'Dependency Review'
         uses: actions/dependency-review-action@v2
-
   eslint-check:
-    if: ${{ false }}
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -36,7 +33,6 @@ jobs:
           npm run lint
 
   general-tests:
-    if: ${{ false }}
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -52,7 +48,6 @@ jobs:
           npm run test
 
   unit-tests:
-    if: ${{ false }}
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -76,7 +71,6 @@ jobs:
             npm run unit-test-x509
 
   unit-test-circuits:
-    if: ${{ false }}
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -103,7 +97,6 @@ jobs:
           npm run unit-test-circuits
 
   client-authentication-test:
-    if: ${{ false }}
     env:
       AUTHENTICATION_KEY: a3322a85-7222-4713-907b-b569679b2dd9
       ENDPOINTS_WHITELISTED: '/commitment/salt\?.*, /contract-address/\w+/?'
@@ -194,7 +187,6 @@ jobs:
           path: ./authentication-test.log
 
   circuits-test:
-    if: ${{ false }}
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
@@ -242,7 +234,6 @@ jobs:
           path: ./circuit-test.log
 
   ganache-protocol-test:
-    if: ${{ false }}
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
@@ -290,7 +281,6 @@ jobs:
           path: ./ganache-test.log
 
   ganache-erc20-test:
-    if: ${{ false }}
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
@@ -340,7 +330,6 @@ jobs:
           path: ./ganache-test.log
 
   ganache-erc721-test:
-    if: ${{ false }}
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
@@ -388,7 +377,6 @@ jobs:
           path: ./ganache-test.log
 
   ganache-erc1155-test:
-    if: ${{ false }}
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
@@ -436,7 +424,6 @@ jobs:
           path: ./ganache-test.log
 
   ganache-tokenisation-l2-test:
-    if: ${{ false }}
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
@@ -483,7 +470,6 @@ jobs:
           name: ganache-test-logs
           path: ./ganache-test.log
   x509-test:
-    if: ${{ false }}
     env:
       WHITELISTING: enable
       CONFIRMATIONS: 1
@@ -531,7 +517,6 @@ jobs:
           path: ./ganacx509he-test.log
 
   administrator-test:
-    if: ${{ false }}
     runs-on: ubuntu-20.04
     env:
       CONFIRMATIONS: 1
@@ -579,7 +564,6 @@ jobs:
           path: ./administrator-test.log
 
   optimist-sync-test:
-    if: ${{ false }}
     runs-on: ubuntu-22.04
     env:
       CONFIRMATIONS: 1
@@ -627,7 +611,7 @@ jobs:
           path: ./optimist-sync-test.log
 
   adversary-test:
-    if: ${{ false }} # disable for now
+    # disable for now
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker,lazy-optimist,bad-client
@@ -679,7 +663,6 @@ jobs:
           path: ./adversary-test.log
 
   ping-pong-test:
-    if: ${{ false }}
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,deployer,worker
@@ -749,7 +732,7 @@ jobs:
           path: ./ping-pong-test.log
 
   test-gas:
-    if: ${{ false }} # disable for now
+    # disable for now
     env:
       MAX_BLOCK_SIZE: 25000
       CONFIRMATIONS: 1
@@ -799,7 +782,6 @@ jobs:
           path: ./test-gas.log
 
   test-apps:
-    if: ${{ false }}
     name: check apps for liveliness
     runs-on: ubuntu-20.04
     env:

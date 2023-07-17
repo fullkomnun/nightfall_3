@@ -31,7 +31,7 @@ function createQueue(options) {
   return queue;
 }
 
-const { MAX_QUEUE, CONFIRMATION_POLL_TIME, CONFIRMATIONS } = config;
+const { MAX_QUEUE, CONFIRMATIONS } = config;
 
 const fastQueue = createQueue({ autostart: false, concurrency: 1 });
 const slowQueue = createQueue({ autostart: false, concurrency: 1 });

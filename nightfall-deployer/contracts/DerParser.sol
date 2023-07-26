@@ -3,7 +3,6 @@
 pragma solidity ^0.8.3;
 
 // This contract can parse a DER object, such as a suitably encoded x509 certificate
-import 'hardhat/console.sol';
 
 contract DERParser {
     struct DecodedTlv {

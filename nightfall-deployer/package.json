@@ -48,9 +48,6 @@
     },
     "yargs": {
       "yargs-parser": "5.0.1"
-    },
-    "solc": {
-      "yargs-parser": "5.0.1"
     }
   }
 }

@@ -7,16 +7,16 @@ import { packBlockInfo } from '../../../common-files/utils/block-utils.mjs';
 const { ethers } = hardhat;
 
 export function calculateBlockHash(b) {
-  const encodedBlock = ethers.utils.defaultAbiCoder.encode(
+  const encodedBlock = ethers.AbiCoder.defaultAbiCoder().encode(
     ['uint256', 'bytes32', 'bytes32', 'bytes32', 'bytes32'],
     [b.packedInfo, b.root, b.previousBlockHash, b.frontierHash, b.transactionHashesRoot],
   );
 
-  return ethers.utils.keccak256(encodedBlock);
+  return ethers.keccak256(encodedBlock);
 }
 
 export function calculateTransactionHash(tx) {
-  const encodedTx = ethers.utils.defaultAbiCoder.encode(
+  const encodedTx = ethers.AbiCoder.defaultAbiCoder().encode(
     [
       'uint256',
       'uint256[]',
@@ -41,8 +41,8 @@ export function calculateTransactionHash(tx) {
     ],
   );
 
-  const encodedTxPadded = ethers.utils.hexZeroPad(32, 32).concat(encodedTx.slice(2));
-  return ethers.utils.keccak256(encodedTxPadded);
+  const encodedTxPadded = ethers.zeroPadValue(ethers.toBeHex(32), 32).concat(encodedTx.slice(2));
+  return ethers.keccak256(encodedTxPadded);
 }
 
 export function createBlockAndTransactions(
@@ -79,8 +79,8 @@ export function createBlockAndTransactions(
     packedInfo: packedInfoWithdraw,
     historicRootBlockNumberL2: historicRootsPacked,
     tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
-    ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
-    recipientAddress: ethers.utils.hexZeroPad(ownerAddress, 32),
+    ercAddress: ethers.zeroPadValue(erc20MockAddress, 32),
+    recipientAddress: ethers.zeroPadValue(ownerAddress, 32),
     commitments: [
       '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
       '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -109,7 +109,7 @@ export function createBlockAndTransactions(
     packedInfo: packedInfoDeposit,
     historicRootBlockNumberL2: [],
     tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
-    ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
+    ercAddress: ethers.zeroPadValue(erc20MockAddress, 32),
     recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
     commitments: ['0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf'],
     nullifiers: [],
@@ -125,7 +125,7 @@ export function createBlockAndTransactions(
     ],
   };
 
-  const transactionHashesRoot = ethers.utils.solidityKeccak256(
+  const transactionHashesRoot = ethers.solidityPackedKeccak256(
     ['uint256', 'uint256'],
     [calculateTransactionHash(withdrawTransaction), calculateTransactionHash(depositTransaction)],
   );

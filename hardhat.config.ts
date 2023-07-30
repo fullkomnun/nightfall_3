@@ -5,6 +5,7 @@ import '@nomicfoundation/hardhat-ethers';
 import '@openzeppelin/hardhat-upgrades';
 import 'solidity-coverage';
 import 'hardhat-gas-reporter';
+import '@nomicfoundation/hardhat-chai-matchers';
 
 const config: HardhatUserConfig = {
   solidity: {

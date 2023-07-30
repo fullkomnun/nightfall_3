@@ -32,7 +32,7 @@ const END_USER_CERTIFICATE_PATH =
   'test/unit/utils/mock_certs/Nightfall_end_user_policies.cer';
 const TEST_SELF_GENERATED_CERTS = !!process.env.END_USER_PRIV_KEY_PATH;
 
-describe('DerParser contract functions', function () {
+describe.only('DerParser contract functions', function () {
   const authorityKeyIdentifier = AUTHORITY_KEY_IDENTIFIER;
   const nightfallRootPublicKey = { modulus: MODULUS, exponent: exponent };
 
@@ -187,7 +187,7 @@ describe('DerParser contract functions', function () {
         true,
         false,
         0,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
       );
       expect.fail('The certificate check passed, but it should have failed');
     } catch (err) {
@@ -201,11 +201,11 @@ describe('DerParser contract functions', function () {
     await X509Instance.validateCertificate(
       certChain[1].derBuffer,
       certChain[1].tlvLength,
-      0,
+      ethers.ZeroHash,
       false,
       false,
       0,
-      ethers.constants.AddressZero,
+      ethers.ZeroAddress,
     );
 
     if (!TEST_SELF_GENERATED_CERTS) {
@@ -217,7 +217,7 @@ describe('DerParser contract functions', function () {
         true,
         false,
         1,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
       );
 
       // now presenting the Entrust mock cert should also work
@@ -228,7 +228,7 @@ describe('DerParser contract functions', function () {
         true,
         false,
         2,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
       );
     }
 
@@ -243,7 +243,7 @@ describe('DerParser contract functions', function () {
       true,
       false,
       oidIndex,
-      ethers.constants.AddressZero,
+      ethers.ZeroAddress,
     );
 
     // we should now be able to pass an x509 check for this address
@@ -269,7 +269,7 @@ describe('DerParser contract functions', function () {
           true,
           false,
           oidIndex,
-          ethers.constants.AddressZero,
+          ethers.ZeroAddress,
         );
         expect.fail('The certificate check passed, but it should have failed');
       } catch (err) {

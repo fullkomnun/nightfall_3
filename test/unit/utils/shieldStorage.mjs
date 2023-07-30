@@ -14,15 +14,15 @@ export async function setAdvancedWithdrawal(
   fee,
   isWithdrawn,
 ) {
-  const indexAdvanceWithdrawal = ethers.utils.solidityKeccak256(
+  const indexAdvanceWithdrawal = ethers.solidityPackedKeccak256(
     ['uint256', 'uint256'],
     [withdrawTransactionHash, advancedWithdrawalSlot],
   );
 
-  const advancedWithdrawalStruct = ethers.utils.hexlify(
-    ethers.utils.concat([
-      ethers.utils.hexlify(Number(isWithdrawn)),
-      ethers.utils.hexZeroPad(ethers.utils.hexlify(fee), 11),
+  const advancedWithdrawalStruct = ethers.toBeHex(
+    ethers.concat([
+      ethers.toBeHex(Number(isWithdrawn)),
+      ethers.zeroPadValue(ethers.toBeHex(fee), 11),
       liquidityProviderAddress,
     ]),
   );

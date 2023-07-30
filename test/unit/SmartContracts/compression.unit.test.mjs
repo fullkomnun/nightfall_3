@@ -35,43 +35,43 @@ describe('Test On-chain compression function', function () {
   before(async () => {
     const Verifier = await ethers.getContractFactory('Verifier');
     const verifier = await Verifier.deploy();
-    await verifier.deployed();
+    await verifier.waitForDeployment();
 
     const Poseidon = await ethers.getContractFactory('Poseidon');
     const poseidon = await Poseidon.deploy();
-    await poseidon.deployed();
+    await poseidon.waitForDeployment();
 
     const MerkleTree = await ethers.getContractFactory('MerkleTree_Stateless', {
       libraries: {
-        Poseidon: poseidon.address,
+        Poseidon: await poseidon.getAddress(),
       },
     });
     merkleTree = await MerkleTree.deploy();
-    await merkleTree.deployed();
+    await merkleTree.waitForDeployment();
 
     const ChallengesUtil = await ethers.getContractFactory('ChallengesUtil', {
       libraries: {
-        MerkleTree_Stateless: merkleTree.address,
+        MerkleTree_Stateless: await merkleTree.getAddress(),
       },
     });
     challengesUtil = await ChallengesUtil.deploy();
-    await challengesUtil.deployed();
+    await challengesUtil.waitForDeployment();
 
     const Utils = await ethers.getContractFactory('Utils');
     utils = await Utils.deploy();
-    await utils.deployed();
+    await utils.waitForDeployment();
 
     const Challenges = await ethers.getContractFactory('Challenges', {
       libraries: {
-        Verifier: verifier.address,
-        ChallengesUtil: challengesUtil.address,
-        Utils: utils.address,
+        Verifier: await verifier.getAddress(),
+        ChallengesUtil: await challengesUtil.getAddress(),
+        Utils: await utils.getAddress(),
       },
     });
     challenges = await upgrades.deployProxy(Challenges, [], {
       unsafeAllow: ['external-library-linking'],
     });
-    await challenges.deployed();
+    await challenges.waitForDeployment();
   });
 
   it('should check compressions unit tests', async function () {
@@ -99,15 +99,15 @@ describe('Test On-chain compression function', function () {
     const compressedG1A = compressG1(testProof.pi_a);
     const compressedG1C = compressG1(testProof.pi_c);
 
-    const [successA, g1A] = await challenges.callStatic.decompressG1(compressedG1A);
-    const [successC, g1C] = await challenges.callStatic.decompressG1(compressedG1C);
+    const [successA, g1A] = await challenges.decompressG1.staticCall(compressedG1A);
+    const [successC, g1C] = await challenges.decompressG1.staticCall(compressedG1C);
     const [successB, g2B] = await challenges.decompressG2(compressedG2B);
     // On-chain should have successful decompressed
     expect([successA, successB, successC]).to.deep.equal([true, true, true]);
     // Decompressed points should match the original points
-    expect(testProof.pi_a).to.deep.equal(g1A.map(a => a.toHexString()));
-    expect(testProof.pi_b).to.deep.equal(g2B.map(outer => outer.map(a => a.toHexString())));
-    expect(testProof.pi_c).to.deep.equal(g1C.map(a => a.toHexString()));
+    expect(testProof.pi_a).to.deep.equal(g1A.map(a => `0x${a.toString(16)}`));
+    expect(testProof.pi_b).to.deep.equal(g2B.map(outer => outer.map(a => `0x${a.toString(16)}`)));
+    expect(testProof.pi_c).to.deep.equal(g1C.map(a => `0x${a.toString(16)}`));
   });
 
   it('should do property-based testing for G1 Compression/Decompression ', async () => {
@@ -115,16 +115,14 @@ describe('Test On-chain compression function', function () {
       fc.asyncProperty(fc.bigInt({ min: 1n, max: Fp - 1n }), async randFr => {
         const G1Point = await randomG1Point(randFr);
         const compressed = compressG1(G1Point);
-        const [success, decompressed] = await challenges.callStatic.decompressG1(compressed);
+        const [success, decompressed] = await challenges.decompressG1.staticCall(compressed);
         const localDecompress = decompressG1(compressed);
         // On-chain should have successful decompressed
         expect(success).to.eql(true);
         // On-chain decompressed points should match the original points
         // Node decompressed points should match on-chain decompression
-        expect(decompressed.map(d => d.toBigInt())).to.deep.eql(G1Point);
-        expect(decompressed.map(d => d.toBigInt())).to.deep.eql(
-          localDecompress.map(a => BigInt(a)),
-        );
+        expect(decompressed).to.deep.eql(G1Point);
+        expect(decompressed).to.deep.eql(localDecompress.map(a => BigInt(a)));
       }),
       { numRuns: 10 },
     );
@@ -140,10 +138,8 @@ describe('Test On-chain compression function', function () {
         expect(success).equal(true);
         // On-chain decompressed points should match the original points
         // Node decompressed points should match on-chain decompression
-        expect(decompressed.map(d => d.map(u => u.toBigInt()))).to.deep.eql(G2Point);
-        expect(decompressed.map(d => d.map(u => u.toBigInt()))).to.deep.eql(
-          localDecompress.map(a => a.map(b => BigInt(b))),
-        );
+        expect(decompressed).to.deep.eql(G2Point);
+        expect(decompressed).to.deep.eql(localDecompress.map(a => a.map(b => BigInt(b))));
       }),
       { numRuns: 10 },
     );
@@ -158,7 +154,7 @@ describe('Test On-chain compression function', function () {
     const G2Compressed = compressG2(G2Point0);
     const localDecompressG1 = decompressG1(G1Compressed);
     const localDecompressG2 = decompressG2(G2Compressed);
-    const [successG1, contractDecompressG1] = await challenges.callStatic.decompressG1(
+    const [successG1, contractDecompressG1] = await challenges.decompressG1.staticCall(
       G1Compressed,
     );
     const [successG2, contractDecompressG2] = await challenges.decompressG2(G2Compressed);
@@ -166,14 +162,10 @@ describe('Test On-chain compression function', function () {
     expect([successG1, successG2]).to.deep.equal([false, false]);
     // On-chain decompressed points should return the 0.G points.
     // Node decompressed points should match on-chain decompression
-    expect(contractDecompressG1.map(d => d.toBigInt())).to.deep.eql(G1Point0);
-    expect(contractDecompressG2.map(d => d.map(u => u.toBigInt()))).to.deep.eql(G2Point0);
-    expect(contractDecompressG1.map(d => d.toBigInt())).to.deep.eql(
-      localDecompressG1.map(a => BigInt(a)),
-    );
-    expect(contractDecompressG2.map(d => d.map(u => u.toBigInt()))).to.deep.eql(
-      localDecompressG2.map(a => a.map(b => BigInt(b))),
-    );
+    expect(contractDecompressG1).to.deep.eql(G1Point0);
+    expect(contractDecompressG2).to.deep.eql(G2Point0);
+    expect(contractDecompressG1).to.deep.eql(localDecompressG1.map(a => BigInt(a)));
+    expect(contractDecompressG2).to.deep.eql(localDecompressG2.map(a => a.map(b => BigInt(b))));
   });
 
   it('should fail if decompressing invalid G1 points', async function () {
@@ -182,7 +174,7 @@ describe('Test On-chain compression function', function () {
       '0x23b189035628389ee4a0fda8337562b5d0f7e7b45fcf88ed5083ae3f151e77d5',
     ];
     const compressed = compressG1(p);
-    const [success] = await challenges.callStatic.decompressG1(compressed);
+    const [success] = await challenges.decompressG1.staticCall(compressed);
     expect(success).to.eql(false);
     expect(decompressG1.bind(compressed)).to.throw();
   });

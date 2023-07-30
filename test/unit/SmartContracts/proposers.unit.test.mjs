@@ -20,47 +20,47 @@ describe('Proposers contract Proposers functions', function () {
 
     const Proposers = await ethers.getContractFactory('Proposers');
     ProposersInstance = await upgrades.deployProxy(Proposers, []);
-    await ProposersInstance.deployed();
+    await ProposersInstance.waitForDeployment();
 
     const Verifier = await ethers.getContractFactory('Verifier');
     const verifier = await Verifier.deploy();
-    await verifier.deployed();
+    await verifier.waitForDeployment();
 
     const Poseidon = await ethers.getContractFactory('Poseidon');
     const poseidon = await Poseidon.deploy();
-    await poseidon.deployed();
+    await poseidon.waitForDeployment();
 
     const MerkleTree = await ethers.getContractFactory('MerkleTree_Stateless', {
       libraries: {
-        Poseidon: poseidon.address,
+        Poseidon: await poseidon.getAddress(),
       },
     });
     const merkleTree = await MerkleTree.deploy();
-    await merkleTree.deployed();
+    await merkleTree.waitForDeployment();
 
     const ChallengesUtil = await ethers.getContractFactory('ChallengesUtil', {
       libraries: {
-        MerkleTree_Stateless: merkleTree.address,
+        MerkleTree_Stateless: await merkleTree.getAddress(),
       },
     });
     const challengesUtil = await ChallengesUtil.deploy();
-    await challengesUtil.deployed();
+    await challengesUtil.waitForDeployment();
 
     const Utils = await ethers.getContractFactory('Utils');
     const utils = await Utils.deploy();
-    await utils.deployed();
+    await utils.waitForDeployment();
 
     const Challenges = await ethers.getContractFactory('Challenges', {
       libraries: {
-        Verifier: verifier.address,
-        ChallengesUtil: challengesUtil.address,
-        Utils: utils.address,
+        Verifier: await verifier.getAddress(),
+        ChallengesUtil: await challengesUtil.getAddress(),
+        Utils: await utils.getAddress(),
       },
     });
     const challenges = await upgrades.deployProxy(Challenges, [], {
       unsafeAllow: ['external-library-linking'],
     });
-    await challenges.deployed();
+    await challenges.waitForDeployment();
 
     const X509 = await ethers.getContractFactory('X509');
     const x509 = await upgrades.deployProxy(X509, []);
@@ -70,31 +70,35 @@ describe('Proposers contract Proposers functions', function () {
     const sanctionsListMockInstance = await SanctionsListMockDeployer.deploy(
       sanctionedSigner.address,
     );
-    const sanctionsListAddress = sanctionsListMockInstance.address;
+    const sanctionsListAddress = await sanctionsListMockInstance.getAddress();
 
     const Shield = await ethers.getContractFactory('Shield');
     const shield = await upgrades.deployProxy(Shield, [], {
       initializer: 'initializeState',
     });
-    await shield.deployed();
+    await shield.waitForDeployment();
 
     const State = await ethers.getContractFactory('State', {
       libraries: {
-        Utils: utils.address,
+        Utils: await utils.getAddress(),
       },
     });
     state = await upgrades.deployProxy(
       State,
-      [ProposersInstance.address, challenges.address, shield.address],
+      [
+        await ProposersInstance.getAddress(),
+        await challenges.getAddress(),
+        await shield.getAddress(),
+      ],
       {
         unsafeAllow: ['external-library-linking'],
         initializer: 'initializeState',
       },
     );
-    await state.deployed();
+    await state.waitForDeployment();
 
-    await ProposersInstance.setStateContract(state.address);
-    await ProposersInstance.setAuthorities(sanctionsListAddress, x509.address);
+    await ProposersInstance.setStateContract(await state.getAddress());
+    await ProposersInstance.setAuthorities(sanctionsListAddress, await x509.getAddress());
   });
 
   afterEach(async () => {
@@ -111,13 +115,11 @@ describe('Proposers contract Proposers functions', function () {
   it('should register proposer', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const newStake = 2000000;
+    const newStake = 2000000n;
 
     const numProposers = await state.getNumProposers();
 
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
     const TimeLockedStakeBefore = await state.stakeAccounts(addr1.address);
     const registerProposerTx = await ProposersInstance.registerProposer(newUrl, newFee, {
       value: newStake,
@@ -126,8 +128,8 @@ describe('Proposers contract Proposers functions', function () {
     const TimeLockedStakeUpdated = await state.stakeAccounts(addr1.address);
     const LinkedAddress = await state.proposers(addr1.address);
 
-    const eventTransfer = receiptRegister.events.find(
-      event => event.event === 'NewCurrentProposer',
+    const eventTransfer = receiptRegister.logs.find(
+      event => event.eventName === 'NewCurrentProposer',
     );
     const [proposer] = eventTransfer.args;
 
@@ -139,9 +141,9 @@ describe('Proposers contract Proposers functions', function () {
     expect(LinkedAddress.fee).to.equal(newFee);
     expect(LinkedAddress.thisAddress).to.equal(addr1.address);
 
-    expect(TimeLockedStakeUpdated.amount).to.equal(TimeLockedStakeBefore.amount.add(newStake));
+    expect(TimeLockedStakeUpdated.amount).to.equal(TimeLockedStakeBefore.amount + newStake);
 
-    expect(await state.getNumProposers()).to.equal(numProposers.add(1));
+    expect(await state.getNumProposers()).to.equal(numProposers + 1n);
   });
 
   it('should not register an already registered proposer', async function () {
@@ -150,8 +152,8 @@ describe('Proposers contract Proposers functions', function () {
     });
     const receiptRegister = await registerProposerTx.wait();
 
-    const eventTransfer = receiptRegister.events.find(
-      event => event.event === 'NewCurrentProposer',
+    const eventTransfer = receiptRegister.logs.find(
+      event => event.eventName === 'NewCurrentProposer',
     );
     const [proposer] = eventTransfer.args;
 
@@ -175,8 +177,8 @@ describe('Proposers contract Proposers functions', function () {
     });
     const receiptRegister = await registerProposerTx.wait();
 
-    const eventTransfer = receiptRegister.events.find(
-      event => event.event === 'NewCurrentProposer',
+    const eventTransfer = receiptRegister.logs.find(
+      event => event.eventName === 'NewCurrentProposer',
     );
     const [proposer] = eventTransfer.args;
 
@@ -192,14 +194,10 @@ describe('Proposers contract Proposers functions', function () {
   it('should register two different proposer', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const newStake = 3000000;
+    const newStake = 3000000n;
 
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
-    expect((await state.getProposer(addr2.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
+    expect((await state.getProposer(addr2.address)).thisAddress).to.equal(ethers.ZeroAddress);
 
     const numProposers = await state.getNumProposers();
 
@@ -211,8 +209,8 @@ describe('Proposers contract Proposers functions', function () {
     const TimeLockedStakeUpdated = await state.stakeAccounts(addr1.address);
     const LinkedAddress = await state.proposers(addr1.address);
 
-    const eventTransfer = receiptRegister.events.find(
-      event => event.event === 'NewCurrentProposer',
+    const eventTransfer = receiptRegister.logs.find(
+      event => event.eventName === 'NewCurrentProposer',
     );
     const [proposer] = eventTransfer.args;
 
@@ -223,9 +221,9 @@ describe('Proposers contract Proposers functions', function () {
     expect(LinkedAddress.fee).to.equal(newFee);
     expect(LinkedAddress.thisAddress).to.equal(addr1.address);
 
-    expect(TimeLockedStakeUpdated.amount).to.equal(TimeLockedStakeBefore.amount.add(newStake));
+    expect(TimeLockedStakeUpdated.amount).to.equal(TimeLockedStakeBefore.amount + newStake);
 
-    expect(await state.getNumProposers()).to.equal(numProposers.add(1));
+    expect(await state.getNumProposers()).to.equal(numProposers + 1n);
 
     const numProposers2 = await state.getNumProposers();
 
@@ -240,8 +238,8 @@ describe('Proposers contract Proposers functions', function () {
     const TimeLockedStakeUpdated2 = await state.stakeAccounts(addr2.address);
     const LinkedAddress2 = await state.proposers(addr2.address);
 
-    const addr2eventTransfer = addr2receiptRegister.events.find(
-      event => event.event === 'NewCurrentProposer',
+    const addr2eventTransfer = addr2receiptRegister.logs.find(
+      event => event.eventName === 'NewCurrentProposer',
     );
     expect(addr2eventTransfer).to.be.an('undefined'); // no event fired
 
@@ -251,23 +249,21 @@ describe('Proposers contract Proposers functions', function () {
     expect(LinkedAddress2.fee).to.equal(newFee);
     expect(LinkedAddress2.thisAddress).to.equal(addr2.address);
 
-    expect(TimeLockedStakeUpdated2.amount).to.equal(TimeLockedStakeBefore2.amount.add(newStake));
+    expect(TimeLockedStakeUpdated2.amount).to.equal(TimeLockedStakeBefore2.amount + newStake);
 
-    expect(await state.getNumProposers()).to.equal(numProposers2.add(1));
+    expect(await state.getNumProposers()).to.equal(numProposers2 + 1n);
   });
 
   it('should deregister a proposer', async function () {
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
 
     const registerProposerTx = await ProposersInstance.registerProposer('url', 100, {
       value: 1000000,
     });
     const receiptRegister = await registerProposerTx.wait();
 
-    const eventTransfer = receiptRegister.events.find(
-      event => event.event === 'NewCurrentProposer',
+    const eventTransfer = receiptRegister.logs.find(
+      event => event.eventName === 'NewCurrentProposer',
     );
     const [proposer] = eventTransfer.args;
 
@@ -276,15 +272,11 @@ describe('Proposers contract Proposers functions', function () {
 
     await ProposersInstance.deRegisterProposer();
 
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
   });
 
   it('should not deregister a non existing proposer', async function () {
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
 
     await expect(ProposersInstance.deRegisterProposer()).to.be.revertedWith(
       'Proposers: Not a proposer',
@@ -292,16 +284,14 @@ describe('Proposers contract Proposers functions', function () {
   });
 
   it('should not withdrawStake as a proposer', async function () {
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
     const registerProposerTx = await ProposersInstance.registerProposer('url', 100, {
       value: 1000000,
     });
     const receiptRegister = await registerProposerTx.wait();
 
-    const eventTransfer = receiptRegister.events.find(
-      event => event.event === 'NewCurrentProposer',
+    const eventTransfer = receiptRegister.logs.find(
+      event => event.eventName === 'NewCurrentProposer',
     );
     const [proposer] = eventTransfer.args;
 
@@ -315,16 +305,14 @@ describe('Proposers contract Proposers functions', function () {
   });
 
   it('should not withdrawStake: Too soon to withdraw the stake', async function () {
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
     const registerProposerTx = await ProposersInstance.registerProposer('url', 100, {
       value: 1000000,
     });
     const receiptRegister = await registerProposerTx.wait();
 
-    const eventTransfer = receiptRegister.events.find(
-      event => event.event === 'NewCurrentProposer',
+    const eventTransfer = receiptRegister.logs.find(
+      event => event.eventName === 'NewCurrentProposer',
     );
     const [proposer] = eventTransfer.args;
 
@@ -343,16 +331,14 @@ describe('Proposers contract Proposers functions', function () {
     const network = await ethers.provider.getNetwork();
     console.log('Network chain id=', network.chainId);
     if (network.chainId === 31337 || network.chainId === 1337) {
-      expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-        ethers.constants.AddressZero,
-      );
+      expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
       const registerProposerTx = await ProposersInstance.registerProposer('url', 100, {
         value: 1000000,
       });
       const receiptRegister = await registerProposerTx.wait();
 
-      const eventTransfer = receiptRegister.events.find(
-        event => event.event === 'NewCurrentProposer',
+      const eventTransfer = receiptRegister.logs.find(
+        event => event.eventName === 'NewCurrentProposer',
       );
       const [proposer] = eventTransfer.args;
 
@@ -372,7 +358,7 @@ describe('Proposers contract Proposers functions', function () {
       expect((await state.stakeAccounts(addr1.address)).amount).to.equal(0);
 
       expect((await state.pendingWithdrawalsFees(addr1.address)).feesL1).to.equal(
-        TimeLockedStakeBefore.amount.add(TimeLockedStakeBefore.challengeLocked),
+        TimeLockedStakeBefore.amount + TimeLockedStakeBefore.challengeLocked,
       );
       expect((await state.pendingWithdrawalsFees(addr1.address)).feesL2).to.equal(0);
     } else {
@@ -381,9 +367,7 @@ describe('Proposers contract Proposers functions', function () {
   });
 
   it('should not updateProposer if you are not a proposer', async function () {
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
 
     await expect(ProposersInstance.updateProposer('url1', 1000)).to.be.revertedWith(
       'Proposers: This proposer is not registered or you are not that proposer',
@@ -394,8 +378,8 @@ describe('Proposers contract Proposers functions', function () {
     });
     const receiptRegister = await registerProposerTx.wait();
 
-    const eventTransfer = receiptRegister.events.find(
-      event => event.event === 'NewCurrentProposer',
+    const eventTransfer = receiptRegister.logs.find(
+      event => event.eventName === 'NewCurrentProposer',
     );
     const [proposer] = eventTransfer.args;
 
@@ -411,17 +395,15 @@ describe('Proposers contract Proposers functions', function () {
   it('should updateProposer without stake increment', async function () {
     const newUrl = 'url1';
     const newFee = 1000;
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
 
     const registerProposerTx = await ProposersInstance.registerProposer('url', 100, {
       value: 1000000,
     });
     const receiptRegister = await registerProposerTx.wait();
 
-    const eventTransfer = receiptRegister.events.find(
-      event => event.event === 'NewCurrentProposer',
+    const eventTransfer = receiptRegister.logs.find(
+      event => event.eventName === 'NewCurrentProposer',
     );
     const [proposer] = eventTransfer.args;
 
@@ -439,18 +421,16 @@ describe('Proposers contract Proposers functions', function () {
   it('should updateProposer with stake increment', async function () {
     const newUrl = 'url1';
     const newFee = 1000;
-    const newStake = 500;
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    const newStake = 500n;
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
 
     const registerProposerTx = await ProposersInstance.registerProposer('url', 100, {
       value: 1000000,
     });
     const receiptRegister = await registerProposerTx.wait();
 
-    const eventTransfer = receiptRegister.events.find(
-      event => event.event === 'NewCurrentProposer',
+    const eventTransfer = receiptRegister.logs.find(
+      event => event.eventName === 'NewCurrentProposer',
     );
     const [proposer] = eventTransfer.args;
 
@@ -466,6 +446,6 @@ describe('Proposers contract Proposers functions', function () {
     expect(LinkedAddress.fee).to.equal(newFee);
     expect(LinkedAddress.thisAddress).to.equal(addr1.address);
 
-    expect(TimeLockedStakeUpdated.amount).to.equal(TimeLockedStakeBefore.amount.add(newStake));
+    expect(TimeLockedStakeUpdated.amount).to.equal(TimeLockedStakeBefore.amount + newStake);
   });
 });

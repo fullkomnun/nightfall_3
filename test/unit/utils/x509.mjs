@@ -57,13 +57,13 @@ export function makeTlv(struct) {
   } = struct;
   const { isConstructed, tagType } = _tag;
   const tlv = {
-    start: _start.toNumber(),
-    headerLength: _headerLength.toNumber(),
+    start: BigInt.asUintN(64, _start),
+    headerLength: BigInt.asUintN(64, _headerLength),
     tag: { isConstructed, tagType: derMapping[parseInt(tagType, 16)] },
-    length: _length.toNumber(),
+    length: BigInt.asUintN(64, _length),
     value,
     octets,
-    depth: _depth.toNumber(),
+    depth: BigInt.asUintN(64, _depth),
   };
   return tlv;
 }

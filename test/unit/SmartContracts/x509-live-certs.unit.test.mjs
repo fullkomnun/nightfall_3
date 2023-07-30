@@ -106,11 +106,11 @@ describe('DerParser contract functions', function () {
         await X509Instance.validateCertificate(
           derBuffer,
           tlvLength,
-          0,
+          ethers.ZeroHash,
           true,
           true,
           0,
-          ethers.constants.AddressZero,
+          ethers.ZeroAddress,
         );
         expect.fail('The certificate check passed, but it should have failed');
       } catch (err) {
@@ -123,11 +123,11 @@ describe('DerParser contract functions', function () {
       await X509Instance.validateCertificate(
         derBuffer,
         tlvLength,
-        0,
+        ethers.ZeroHash,
         false,
         false,
         0,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
       );
     }
     // now loading the end user certs should work fine (we can't test the whitelisting because we have no private key)
@@ -139,11 +139,11 @@ describe('DerParser contract functions', function () {
       await X509Instance.validateCertificate(
         derBuffer,
         tlvLength,
-        0,
+        ethers.ZeroHash,
         true,
         true,
         i,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
       );
     }
   });

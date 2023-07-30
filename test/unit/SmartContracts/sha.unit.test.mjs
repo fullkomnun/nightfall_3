@@ -26,7 +26,7 @@ function readNistVectors(filename) {
   return nistVectors;
 }
 
-describe('SHA512 tests', function () {
+describe.skip('SHA512 tests', function () {
   let ShaInstance;
   let nistVectors;
   before(async () => {

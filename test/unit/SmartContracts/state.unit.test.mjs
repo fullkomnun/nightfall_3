@@ -17,6 +17,7 @@ describe('State contract State functions', function () {
   let addr1;
   let addr2;
   let state;
+  let stateAddress;
   let addressC;
   let transactionsCreated;
   let shield;
@@ -46,78 +47,83 @@ describe('State contract State functions', function () {
 
     const Proposers = await ethers.getContractFactory('Proposers');
     ProposersInstance = await upgrades.deployProxy(Proposers, []);
-    await ProposersInstance.deployed();
+    await ProposersInstance.waitForDeployment();
 
     const Verifier = await ethers.getContractFactory('Verifier');
     const verifier = await Verifier.deploy();
-    await verifier.deployed();
+    await verifier.waitForDeployment();
 
     const Poseidon = await ethers.getContractFactory('Poseidon');
     const poseidon = await Poseidon.deploy();
-    await poseidon.deployed();
+    await poseidon.waitForDeployment();
 
     const MerkleTree = await ethers.getContractFactory('MerkleTree_Stateless', {
       libraries: {
-        Poseidon: poseidon.address,
+        Poseidon: await poseidon.getAddress(),
       },
     });
     const merkleTree = await MerkleTree.deploy();
-    await merkleTree.deployed();
+    await merkleTree.waitForDeployment();
 
     const ChallengesUtil = await ethers.getContractFactory('ChallengesUtil', {
       libraries: {
-        MerkleTree_Stateless: merkleTree.address,
+        MerkleTree_Stateless: await merkleTree.getAddress(),
       },
     });
     const challengesUtil = await ChallengesUtil.deploy();
-    await challengesUtil.deployed();
+    await challengesUtil.waitForDeployment();
 
     const Utils = await ethers.getContractFactory('Utils');
     const utils = await Utils.deploy();
-    await utils.deployed();
+    await utils.waitForDeployment();
 
     const Challenges = await ethers.getContractFactory('Challenges', {
       libraries: {
-        Verifier: verifier.address,
-        ChallengesUtil: challengesUtil.address,
-        Utils: utils.address,
+        Verifier: await verifier.getAddress(),
+        ChallengesUtil: await challengesUtil.getAddress(),
+        Utils: await utils.getAddress(),
       },
     });
     const challenges = await upgrades.deployProxy(Challenges, [], {
       unsafeAllow: ['external-library-linking'],
     });
-    await challenges.deployed();
+    await challenges.waitForDeployment();
 
     const X509Deployer = await ethers.getContractFactory('X509');
     const X509Instance = await upgrades.deployProxy(X509Deployer);
-    const x509Address = X509Instance.address;
+    const x509Address = await X509Instance.getAddress();
     await X509Instance.enableWhitelisting(false);
 
     const SanctionsListMockDeployer = await ethers.getContractFactory('SanctionsListMock');
     const sanctionsListMockInstance = await SanctionsListMockDeployer.deploy(
-      sanctionedSigner.address,
+      await sanctionedSigner.getAddress(),
     );
-    const sanctionsListAddress = sanctionsListMockInstance.address;
+    const sanctionsListAddress = await sanctionsListMockInstance.getAddress();
 
     const Shield = await ethers.getContractFactory('Shield');
     shield = await upgrades.deployProxy(Shield, [], {
       initializer: 'initializeState',
     });
-    await shield.deployed();
+    await shield.waitForDeployment();
     await shield.setAuthorities(sanctionsListAddress, x509Address);
 
     const State = await ethers.getContractFactory('State', {
       libraries: {
-        Utils: utils.address,
+        Utils: await utils.getAddress(),
       },
     });
-    state = await upgrades.deployProxy(State, [addr1.address, addressC.address, shield.address], {
-      unsafeAllow: ['external-library-linking'],
-      initializer: 'initializeState',
-    });
-    await state.deployed();
+    state = await upgrades.deployProxy(
+      State,
+      [addr1.address, addressC.address, await shield.getAddress()],
+      {
+        unsafeAllow: ['external-library-linking'],
+        initializer: 'initializeState',
+      },
+    );
+    await state.waitForDeployment();
+    stateAddress = await state.getAddress();
 
-    await ProposersInstance.setStateContract(state.address);
+    await ProposersInstance.setStateContract(stateAddress);
 
     await state.registerVerificationKey(0, [], true, false);
     await state.registerVerificationKey(1, [], false, false);
@@ -133,9 +139,7 @@ describe('State contract State functions', function () {
     const newUrl = 'url';
     const newFee = 100;
 
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
     await expect(
       state
         .connect(addr2)
@@ -183,15 +187,15 @@ describe('State contract State functions', function () {
       0,
     ]);
 
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.ZeroAddress);
     await state.setCurrentProposer(addr1.address);
     expect((await state.getCurrentProposer()).thisAddress).to.equal(addr1.address);
   });
 
   it('should not set current proposer if proposer is not registered', async function () {
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.ZeroAddress);
     await state.setCurrentProposer(addr1.address);
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.ZeroAddress);
   });
 
   it('should add pending withdrawal', async function () {
@@ -204,26 +208,26 @@ describe('State contract State functions', function () {
 
   it('should withdraw', async function () {
     await addr1.sendTransaction({
-      to: state.address,
-      value: ethers.utils.parseEther('1.0'),
+      to: stateAddress,
+      value: ethers.parseEther('1.0'),
     });
 
-    const amountL1Token = 100;
+    const amountL1Token = 100n;
     const amountL2Token = 0;
 
     await state.addPendingWithdrawal(addr1.address, amountL1Token, amountL2Token);
     expect((await state.pendingWithdrawalsFees(addr1.address)).feesL1).to.equal(amountL1Token);
     expect((await state.pendingWithdrawalsFees(addr1.address)).feesL2).to.equal(amountL2Token);
 
-    const balanceContract = await ethers.provider.getBalance(state.address);
+    const balanceContract = await ethers.provider.getBalance(stateAddress);
 
     await state.withdraw();
 
     expect((await state.pendingWithdrawalsFees(addr1.address)).feesL1).to.equal(0);
     expect((await state.pendingWithdrawalsFees(addr1.address)).feesL2).to.equal(0);
 
-    expect(await ethers.provider.getBalance(state.address)).to.equal(
-      balanceContract.sub(amountL1Token),
+    expect(await ethers.provider.getBalance(stateAddress)).to.equal(
+      balanceContract - amountL1Token,
     );
   });
 
@@ -263,9 +267,7 @@ describe('State contract State functions', function () {
     const updateUrl = 'url1';
     const updateFee = 500;
 
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
     await state.setProposer(addr1.address, [
       addr1.address,
       addr1.address,
@@ -325,10 +327,8 @@ describe('State contract State functions', function () {
     const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.ZeroAddress);
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
     await state.setProposer(addr1.address, [
       addr1.address,
       addr2.address,
@@ -365,15 +365,9 @@ describe('State contract State functions', function () {
 
     expect((await state.getCurrentProposer()).thisAddress).to.equal(addr2.address);
 
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
-    expect((await state.proposers(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
-    expect((await state.proposers(addr1.address)).nextAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
+    expect((await state.proposers(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
+    expect((await state.proposers(addr1.address)).nextAddress).to.equal(ethers.ZeroAddress);
     expect((await state.proposers(addr1.address)).url).to.equal('');
     expect((await state.proposers(addr1.address)).fee).to.equal(0);
     expect((await state.proposers(addr2.address)).nextAddress).to.equal(addr2.address);
@@ -385,10 +379,8 @@ describe('State contract State functions', function () {
     const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.ZeroAddress);
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
     await state.setProposer(addr1.address, [
       addr1.address,
       addr2.address,
@@ -424,15 +416,9 @@ describe('State contract State functions', function () {
 
     await state.removeProposer(addr2.address);
 
-    expect((await state.getProposer(addr2.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
-    expect((await state.proposers(addr2.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
-    expect((await state.proposers(addr2.address)).nextAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getProposer(addr2.address)).thisAddress).to.equal(ethers.ZeroAddress);
+    expect((await state.proposers(addr2.address)).thisAddress).to.equal(ethers.ZeroAddress);
+    expect((await state.proposers(addr2.address)).nextAddress).to.equal(ethers.ZeroAddress);
     expect((await state.proposers(addr2.address)).url).to.equal('');
     expect((await state.proposers(addr2.address)).fee).to.equal(0);
 
@@ -445,10 +431,8 @@ describe('State contract State functions', function () {
     const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.ZeroAddress);
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
     await state.setProposer(addr1.address, [
       addr1.address,
       addr1.address,
@@ -497,10 +481,8 @@ describe('State contract State functions', function () {
     const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.ZeroAddress);
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
     await state.setProposer(addr1.address, [
       addr1.address,
       addr1.address,
@@ -546,10 +528,8 @@ describe('State contract State functions', function () {
     const newUrl = 'url';
     const newFee = 100;
 
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.ZeroAddress);
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
 
     await state.setProposer(addr1.address, [
       addr1.address,
@@ -586,10 +566,8 @@ describe('State contract State functions', function () {
     const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.ZeroAddress);
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
 
     await state.setProposer(addr1.address, [
       addr1.address,
@@ -629,7 +607,7 @@ describe('State contract State functions', function () {
     const prevSprint = await state.currentSprint();
     await state.changeCurrentProposer();
 
-    expect(await state.currentSprint()).to.equal(prevSprint + 1);
+    expect(await state.currentSprint()).to.equal(prevSprint + 1n);
   });
 
   it('should proposeBlock', async function () {
@@ -659,7 +637,7 @@ describe('State contract State functions', function () {
         ),
     ).to.be.revertedWith('State: Only current proposer authorised');
     await setCommitmentHashEscrowed(
-      state.address,
+      stateAddress,
       transactionsCreated.depositTransaction.commitments,
     );
 
@@ -747,9 +725,9 @@ describe('State contract State functions', function () {
           { value: 10 },
         ),
     ).to.be.revertedWith('State: Only current proposer authorised');
-    transactionsCreated.block.transactionHashesRoot = ethers.constants.HashZero;
+    transactionsCreated.block.transactionHashesRoot = ethers.ZeroHash;
     await setCommitmentHashEscrowed(
-      state.address,
+      stateAddress,
       transactionsCreated.depositTransaction.commitments,
     );
     await expect(
@@ -784,7 +762,7 @@ describe('State contract State functions', function () {
     );
 
     await setCommitmentHashEscrowed(
-      state.address,
+      stateAddress,
       transactionsCreated.depositTransaction.commitments,
     );
     await expect(
@@ -812,7 +790,7 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      stateAddress,
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -863,7 +841,7 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      stateAddress,
       transactionsCreated.depositTransaction.commitments,
     );
     await expect(
@@ -893,7 +871,7 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      stateAddress,
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -982,7 +960,7 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      stateAddress,
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -1025,7 +1003,7 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      stateAddress,
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -1043,7 +1021,7 @@ describe('State contract State functions', function () {
     const newUrl = 'url';
     const newFee = 100;
     const amount = await state.getMinimumStake();
-    const challengeLocked = amount.mul(2);
+    const challengeLocked = amount * 2n;
 
     await state.setProposer(addr1.address, [
       addr1.address,
@@ -1070,7 +1048,7 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setNumProposers(2);
     await setCommitmentHashEscrowed(
-      state.address,
+      stateAddress,
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -1104,10 +1082,8 @@ describe('State contract State functions', function () {
     const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.ZeroAddress);
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
 
     await state.setProposer(addr1.address, [
       addr1.address,
@@ -1132,16 +1108,16 @@ describe('State contract State functions', function () {
     ]);
 
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await state.setStakeAccount(addr2.address, amount.mul(100000), challengeLocked);
+    await state.setStakeAccount(addr2.address, amount * 100000n, challengeLocked);
     await state.setNumProposers(2);
 
     let prevSprint;
-    for (let i = 0; i < (await state.getSprintsInSpan()).add(100); i++) {
+    for (let i = 0; i < (await state.getSprintsInSpan()) + 100n; i++) {
       prevSprint = await state.currentSprint();
       await state.setProposerStartBlock(0);
       await state.changeCurrentProposer();
-      expect(prevSprint.add(1).mod(await state.getSprintsInSpan())).to.equal(
-        (await state.currentSprint()).mod(await state.getSprintsInSpan()),
+      expect((prevSprint + 1n) % (await state.getSprintsInSpan())).to.equal(
+        (await state.currentSprint()) % (await state.getSprintsInSpan()),
       );
     }
   });
@@ -1157,10 +1133,8 @@ describe('State contract State functions', function () {
       signers.push(ethers.Wallet.createRandom());
     }
 
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.ZeroAddress);
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
 
     await state.setProposer(addr1.address, [
       addr1.address,
@@ -1185,7 +1159,7 @@ describe('State contract State functions', function () {
     ]);
 
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await state.setStakeAccount(addr2.address, amount.mul(100000), challengeLocked);
+    await state.setStakeAccount(addr2.address, amount * 100000n, challengeLocked);
     await state.setNumProposers(2);
 
     const sprintInSpan = await state.getSprintsInSpan();
@@ -1210,12 +1184,12 @@ describe('State contract State functions', function () {
     }
 
     let prevSprint;
-    for (let i = 0; i < (await state.getSprintsInSpan()).add(100); i++) {
+    for (let i = 0; i < (await state.getSprintsInSpan()) + 100n; i++) {
       prevSprint = await state.currentSprint();
       await state.setProposerStartBlock(0);
       await state.changeCurrentProposer();
-      expect(prevSprint.add(1).mod(await state.getSprintsInSpan())).to.equal(
-        (await state.currentSprint()).mod(await state.getSprintsInSpan()),
+      expect((prevSprint + 1n) % (await state.getSprintsInSpan())).to.equal(
+        (await state.currentSprint()) % (await state.getSprintsInSpan()),
       );
     }
   });
@@ -1231,10 +1205,8 @@ describe('State contract State functions', function () {
       signers.push(ethers.Wallet.createRandom());
     }
 
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.ZeroAddress);
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
 
     await state.setProposer(addr1.address, [
       addr1.address,
@@ -1259,7 +1231,7 @@ describe('State contract State functions', function () {
     ]);
 
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await state.setStakeAccount(addr2.address, amount.mul(100000), challengeLocked);
+    await state.setStakeAccount(addr2.address, amount * 100000n, challengeLocked);
     await state.setNumProposers(2);
 
     for (let i = 0; i < signers.length; i++) {
@@ -1277,12 +1249,12 @@ describe('State contract State functions', function () {
     }
 
     let prevSprint;
-    for (let i = 0; i < (await state.getSprintsInSpan()).add(100); i++) {
+    for (let i = 0; i < (await state.getSprintsInSpan()) + 100n; i++) {
       prevSprint = await state.currentSprint();
       await state.setProposerStartBlock(0);
       await state.changeCurrentProposer();
-      expect(prevSprint.add(1).mod(await state.getSprintsInSpan())).to.equal(
-        (await state.currentSprint()).mod(await state.getSprintsInSpan()),
+      expect((prevSprint + 1n) % (await state.getSprintsInSpan())).to.equal(
+        (await state.currentSprint()) % (await state.getSprintsInSpan()),
       );
     }
   });
@@ -1298,10 +1270,8 @@ describe('State contract State functions', function () {
       signers.push(ethers.Wallet.createRandom());
     }
 
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.ZeroAddress);
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
 
     await state.setProposer(addr1.address, [
       addr1.address,
@@ -1326,7 +1296,7 @@ describe('State contract State functions', function () {
     ]);
 
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await state.setStakeAccount(addr2.address, amount.mul(100000), challengeLocked);
+    await state.setStakeAccount(addr2.address, amount * 100000n, challengeLocked);
     await state.setNumProposers(2);
 
     for (let i = 0; i < signers.length; i++) {
@@ -1344,12 +1314,12 @@ describe('State contract State functions', function () {
     }
 
     let prevSprint;
-    for (let i = 0; i < (await state.getSprintsInSpan()).add(100); i++) {
+    for (let i = 0; i < (await state.getSprintsInSpan()) + 100n; i++) {
       prevSprint = await state.currentSprint();
       await state.setProposerStartBlock(0);
       await state.changeCurrentProposer();
-      expect(prevSprint.add(1).mod(await state.getSprintsInSpan())).to.equal(
-        (await state.currentSprint()).mod(await state.getSprintsInSpan()),
+      expect((prevSprint + 1n) % (await state.getSprintsInSpan())).to.equal(
+        (await state.currentSprint()) % (await state.getSprintsInSpan()),
       );
     }
   });
@@ -1365,10 +1335,8 @@ describe('State contract State functions', function () {
       signers.push(ethers.Wallet.createRandom());
     }
 
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.ZeroAddress);
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(ethers.ZeroAddress);
 
     await state.setProposer(addr1.address, [
       addr1.address,
@@ -1393,7 +1361,7 @@ describe('State contract State functions', function () {
     ]);
 
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await state.setStakeAccount(addr2.address, amount.mul(100000), challengeLocked);
+    await state.setStakeAccount(addr2.address, amount * 100000n, challengeLocked);
     await state.setNumProposers(2);
 
     for (let i = 0; i < signers.length; i++) {
@@ -1411,12 +1379,12 @@ describe('State contract State functions', function () {
     }
 
     let prevSprint;
-    for (let i = 0; i < (await state.getSprintsInSpan()).add(100); i++) {
+    for (let i = 0; i < (await state.getSprintsInSpan()) + 100n; i++) {
       prevSprint = await state.currentSprint();
       await state.setProposerStartBlock(0);
       await state.changeCurrentProposer();
-      expect(prevSprint.add(1).mod(await state.getSprintsInSpan())).to.equal(
-        (await state.currentSprint()).mod(await state.getSprintsInSpan()),
+      expect((prevSprint + 1n) % (await state.getSprintsInSpan())).to.equal(
+        (await state.currentSprint()) % (await state.getSprintsInSpan()),
       );
     }
   });

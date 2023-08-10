@@ -1,4 +1,7 @@
-FROM node:16.17-bullseye-slim
+ARG NODE_VERSION
+ARG DEBIAN_RELEASE
+
+FROM node:${NODE_VERSION}-${DEBIAN_RELEASE}-slim
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \

@@ -6,6 +6,9 @@ services:
     build:
       dockerfile: docker/proposer.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     ports:
@@ -38,11 +41,14 @@ services:
       - type: bind
         source: ../apps/proposer/src
         target: /app/app/src
-        
+
   challenger:
     build:
       dockerfile: docker/challenger.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     # image: ghcr.io/eyblockchain/nightfall3-challenger:latest
     ports:
       # to use with postman and etc

@@ -6,6 +6,9 @@ services:
     build:
       dockerfile: docker/admin.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     networks:
       - nightfall_network
     depends_on:
@@ -24,6 +27,9 @@ services:
     build:
       dockerfile: docker/client.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     volumes:
       - ./volumes/build:/app/build/
     networks:
@@ -35,7 +41,7 @@ services:
       - rabbitmq
       - mongodb
     environment:
-      AUTHENTICATION_KEY: ${AUTHENTICATION_KEY}    
+      AUTHENTICATION_KEY: ${AUTHENTICATION_KEY}
       AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-600}
       BLOCKCHAIN_URL: ${BLOCKCHAIN_URL:?BLOCKCHAIN_URL-cannot-be-blank}
       CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST:-worker}
@@ -63,6 +69,9 @@ services:
     build:
       dockerfile: docker/deployer.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     depends_on:
       - worker
     networks:
@@ -93,7 +102,7 @@ services:
       UPGRADE: ${UPGRADE_CONTRACTS}
       USDC_RESTRICT: ${USDC_RESTRICT}
       WHITELISTING: ${WHITELISTING?WHITELISTING-not-set}
-      
+
   mongodb:
     image: mongo:4.4.1-bionic
     hostname: mongodb
@@ -120,6 +129,9 @@ services:
     build:
       dockerfile: docker/optimist.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     depends_on:
       - mongodb
     networks:
@@ -150,6 +162,9 @@ services:
     build:
       dockerfile: docker/worker.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     volumes:
       - ./volumes/proving_files:/app/output/
     depends_on:

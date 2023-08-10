@@ -1,7 +1,10 @@
 # build circom from source for local verify
 FROM ghcr.io/eyblockchain/local-circom as builder
 
-FROM node:16.17-bullseye-slim
+ARG NODE_VERSION
+ARG DEBIAN_RELEASE
+
+FROM node:${NODE_VERSION}-${DEBIAN_RELEASE}-slim
 
 # 'node-gyp' requires 'python3', 'make' and 'g++''
 # entrypoint script requires 'netcat'

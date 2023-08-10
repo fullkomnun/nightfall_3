@@ -7,6 +7,9 @@ services:
     build:
       dockerfile: docker/deployer.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     volumes:
       - type: volume
         source: build
@@ -60,6 +63,9 @@ services:
     build:
       dockerfile: docker/hosted-utils-api-server.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     depends_on:
       - worker
     ports:
@@ -74,6 +80,9 @@ services:
     build:
       dockerfile: docker/worker.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     volumes:
       - type: volume
         source: proving_files
@@ -104,6 +113,9 @@ services:
     build:
       dockerfile: docker/client.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     container_name: client_1
     volumes:
       - type: volume
@@ -140,6 +152,9 @@ services:
     build:
       dockerfile: docker/client.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     container_name: client_2
     volumes:
       - type: volume
@@ -188,6 +203,9 @@ services:
     build:
       dockerfile: docker/optimist.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     container_name: proposer_optimist_1
     depends_on:
       - optimist_mongodb_1
@@ -222,6 +240,9 @@ services:
     build:
       dockerfile: docker/optimist.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     container_name: proposer_optimist_2
     depends_on:
       - optimist_mongodb_2
@@ -295,6 +316,9 @@ services:
     build:
       dockerfile: docker/proposer.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     container_name: proposer_1
     depends_on:
       - proposer_optimist_1
@@ -327,6 +351,9 @@ services:
     build:
       dockerfile: docker/proposer.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     container_name: proposer_2
     depends_on:
       - proposer_optimist_2
@@ -359,6 +386,9 @@ services:
     build:
       dockerfile: docker/challenger.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     container_name: challenger_1
     depends_on:
       - proposer_optimist_1

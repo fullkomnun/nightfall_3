@@ -6,6 +6,9 @@ services:
     build:
       dockerfile: docker/admin.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     volumes:
       - type: bind
         source: ../nightfall-administrator/src
@@ -24,6 +27,9 @@ services:
     build:
       dockerfile: docker/client.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     volumes:
       - type: bind
         source: ../nightfall-client/src
@@ -42,6 +48,9 @@ services:
     build:
       dockerfile: docker/deployer.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     volumes:
       - type: bind
         source: ../nightfall-deployer/contracts
@@ -77,6 +86,9 @@ services:
     build:
       dockerfile: docker/optimist.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     volumes:
       - type: bind
         source: ../nightfall-optimist/src
@@ -95,6 +107,9 @@ services:
     build:
       dockerfile: docker/worker.Dockerfile
       context: ..
+      args:
+        - NODE_VERSION
+        - DEBIAN_RELEASE
     volumes:
       - type: bind
         source: ../common-files/test

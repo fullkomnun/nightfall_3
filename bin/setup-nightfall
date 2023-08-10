@@ -17,14 +17,14 @@ if [ $OS_ARCH != "x86_64" ]; then
   NO_CACHE_FLAG='--no-cache'
 fi
 
-if [ "$SKIP_CIRCOM_BUILD" == "" ]; then
-  docker build ${NO_CACHE_FLAG} -t ghcr.io/eyblockchain/local-circom -f docker/circom.Dockerfile .
-fi
-
 script_dir=$(dirname $(realpath $0))
 NODE_FULL_VERSION=$(cat "${script_dir}"/../.nvmrc | sed -e 's/^v//')
 export NODE_VERSION=$(echo "$NODE_FULL_VERSION" | awk -F. '{print $1"."$2}')
 export DEBIAN_RELEASE=bullseye
+
+if [ "$SKIP_CIRCOM_BUILD" == "" ]; then
+  docker build ${NO_CACHE_FLAG} -t ghcr.io/eyblockchain/local-circom -f docker/circom.Dockerfile .
+fi
 
 # containers built separately. A parallel build fails.
 

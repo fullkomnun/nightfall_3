@@ -1,8 +1,8 @@
-# build circom from source for local verify
-FROM ghcr.io/eyblockchain/local-circom as builder
-
 ARG NODE_VERSION
 ARG DEBIAN_RELEASE
+
+# build circom from source for local verify
+FROM ghcr.io/eyblockchain/local-circom as builder
 
 FROM node:${NODE_VERSION}-${DEBIAN_RELEASE}-slim
 

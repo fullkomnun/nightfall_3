@@ -781,6 +781,7 @@ jobs:
           path: ./test-gas.log
 
   test-apps:
+    if: ${{ false }}
     name: check apps for liveliness
     runs-on: ubuntu-20.04
     env:

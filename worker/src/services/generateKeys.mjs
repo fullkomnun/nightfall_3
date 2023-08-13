@@ -56,6 +56,7 @@ async function downloadPowersOfTau(outputPath, power) {
   if (ongoingDownloads.has(remotePath)) {
     logger.info(`Awaiting ongoing download for: ${remotePath}`);
     await ongoingDownloads.get(remotePath);
+    return;
   }
 
   const downloadPromise = downloadFile(

@@ -3,12 +3,6 @@ services:
   # the services 'administrator', 'client' & 'worker' are added here for sharing the filesystem volume.
   administrator:
     image: ghcr.io/eyblockchain/nightfall3-administrator:latest
-    build:
-      dockerfile: docker/admin.Dockerfile
-      context: ..
-      args:
-        - NODE_VERSION
-        - DEBIAN_RELEASE
     networks:
       - nightfall_network
     depends_on:
@@ -24,12 +18,6 @@ services:
 
   client:
     image: ghcr.io/eyblockchain/nightfall3-client:latest
-    build:
-      dockerfile: docker/client.Dockerfile
-      context: ..
-      args:
-        - NODE_VERSION
-        - DEBIAN_RELEASE
     volumes:
       - ./volumes/build:/app/build/
     networks:
@@ -66,12 +54,6 @@ services:
 
   deployer:
     image: ghcr.io/eyblockchain/nightfall3-deployer:latest
-    build:
-      dockerfile: docker/deployer.Dockerfile
-      context: ..
-      args:
-        - NODE_VERSION
-        - DEBIAN_RELEASE
     depends_on:
       - worker
     networks:
@@ -126,12 +108,6 @@ services:
 
   optimist:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
-    build:
-      dockerfile: docker/optimist.Dockerfile
-      context: ..
-      args:
-        - NODE_VERSION
-        - DEBIAN_RELEASE
     depends_on:
       - mongodb
     networks:
@@ -159,12 +135,6 @@ services:
 
   worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
-    build:
-      dockerfile: docker/worker.Dockerfile
-      context: ..
-      args:
-        - NODE_VERSION
-        - DEBIAN_RELEASE
     volumes:
       - ./volumes/proving_files:/app/output/
     depends_on:

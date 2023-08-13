@@ -13,8 +13,13 @@ OS_ARCH=$(uname -m)
 NO_CACHE_FLAG=''
 
 # Workaround when building in a Mac
-if [ $OS_ARCH != "x86_64" ]; then
-  NO_CACHE_FLAG='--no-cache'
+# if [ $OS_ARCH != "x86_64" ]; then
+#   NO_CACHE_FLAG='--no-cache'
+# fi
+
+BUILDKIT=''
+if [[ -n "$DOCKER_BUILDKIT" ]]; then 
+  BUILDKIT=buildx
 fi
 
 script_dir=$(dirname $(realpath $0))
@@ -23,43 +28,39 @@ export NODE_VERSION=$(echo "$NODE_FULL_VERSION" | awk -F. '{print $1"."$2}')
 export DEBIAN_RELEASE=bullseye
 
 if [ "$SKIP_CIRCOM_BUILD" == "" ]; then
-  docker build ${NO_CACHE_FLAG} -t ghcr.io/eyblockchain/local-circom -f docker/circom.Dockerfile .
+  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/local-circom - < docker/circom.Dockerfile
 fi
 
 # containers built separately. A parallel build fails.
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"administrator"* ]]; then
-  docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} administrator
-fi
-
-if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"adversary"* ]]; then
-  docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml -f docker/docker-compose.adversary.yml build ${NO_CACHE_FLAG} lazy-optimist bad-client
+  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/nightfall3-administrator -f docker/admin.Dockerfile .
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"challenger"* ]]; then
-  docker-compose -f docker/docker-compose.apps.yml build ${NO_CACHE_FLAG} challenger
+  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/nightfall3-challenger -f docker/challenger.Dockerfile
 fi
 
-if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"client"* ]]; then
-  docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} client
+if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"client"* || "${NF_SERVICES_TO_START}" == *"adversary"* ]]; then
+  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/nightfall3-client -f docker/client.Dockerfile
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"deployer"* ]]; then
-  docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} deployer
+  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/nightfall3-deployer -f docker/deployer.Dockerfile .
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"hosted-utils-api-server"* ]]; then
-  docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} hosted-utils-api-server
+  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/nightfall3-hosted-utils-api-server -f docker/hosted-utils-api-server.Dockerfile ./hosted-utils-api-server
 fi
 
-if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"optimist"* ]]; then
-  docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} optimist
+if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"optimist"* || "${NF_SERVICES_TO_START}" == *"adversary"* ]]; then
+  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/nightfall3-optimist -f docker/optimist.Dockerfile .
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"proposer"* ]]; then
-  docker-compose -f docker/docker-compose.apps.yml build ${NO_CACHE_FLAG} proposer
+  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/nightfall3-proposer -f docker/proposer.Dockerfile
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"worker"* ]]; then
-  docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} worker
+  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/nightfall3-worker -f docker/worker.Dockerfile .
 fi

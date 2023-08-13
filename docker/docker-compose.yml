@@ -107,12 +107,6 @@ services:
       WETH_RESTRICT: ${WETH_RESTRICT}
 
   hosted-utils-api-server:
-    build:
-      dockerfile: docker/hosted-utils-api-server.Dockerfile
-      context: ..
-      args:
-        - NODE_VERSION
-        - DEBIAN_RELEASE
     image: ghcr.io/eyblockchain/nightfall3-hosted-utils-api-server:latest
     depends_on:
       worker:

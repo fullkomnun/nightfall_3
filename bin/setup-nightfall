@@ -38,7 +38,7 @@ if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"administrat
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"challenger"* ]]; then
-  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/nightfall3-challenger -f docker/challenger.Dockerfile
+  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/nightfall3-challenger -f docker/challenger.Dockerfile .
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"client"* || "${NF_SERVICES_TO_START}" == *"adversary"* ]]; then
@@ -58,7 +58,7 @@ if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"optimist"* 
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"proposer"* ]]; then
-  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/nightfall3-proposer -f docker/proposer.Dockerfile
+  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/nightfall3-proposer -f docker/proposer.Dockerfile .
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"worker"* ]]; then

@@ -32,7 +32,7 @@ const END_USER_CERTIFICATE_PATH =
   'test/unit/utils/mock_certs/Nightfall_end_user_policies.cer';
 const TEST_SELF_GENERATED_CERTS = !!process.env.END_USER_PRIV_KEY_PATH;
 
-describe.only('DerParser contract functions', function () {
+describe('DerParser contract functions', function () {
   const authorityKeyIdentifier = AUTHORITY_KEY_IDENTIFIER;
   const nightfallRootPublicKey = { modulus: MODULUS, exponent: exponent };
 
@@ -61,7 +61,7 @@ describe.only('DerParser contract functions', function () {
     let tlvLength;
 
     X509Instance = await X509Deployer.deploy();
-
+    await X509Instance.waitForDeployment();
     await X509Instance.initialize();
     await X509Instance.setTrustedPublicKey(nightfallRootPublicKey, authorityKeyIdentifier);
     await X509Instance.enableWhitelisting(true);
@@ -107,21 +107,30 @@ describe.only('DerParser contract functions', function () {
     entrustSignature = signEthereumAddress(entrustPrivateKey, addressToSign);
   });
 
+  // eslint-disable-next-line no-extend-native
+  BigInt.prototype.toJSON = function () {
+    return this.toString();
+  };
+
   it('Should parse the intermediate CA cert DER encoding', async function () {
     const intermediateCaCert = certChain[1];
+    const abi = X509Instance.interface.formatJson();
+    console.log(abi);
     const result = await X509Instance.parseDER(
       intermediateCaCert.derBuffer,
       0,
       intermediateCaCert.tlvLength,
     );
+    console.log(`tlvs `, result);
+    // console.log(`tlvs ${JSON.stringify(result, null, 2)}`);
     const tlvs = result.map(tlv => makeTlv(tlv));
     // make a few checks on the output
     expect(tlvs[0].tag.tagType).to.equal('SEQUENCE');
     expect(tlvs[0].depth).to.equal(0);
     expect(tlvs[1].tag.tagType).to.equal('SEQUENCE');
     expect(tlvs[1].depth).to.equal(1);
-    expect(tlvs[intermediateCaCert.tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
-    expect(tlvs[intermediateCaCert.tlvLength - 1].depth).to.equal(1);
+    expect(tlvs[intermediateCaCert.tlvLength - 1n].tag.tagType).to.equal('BIT_STRING');
+    expect(tlvs[intermediateCaCert.tlvLength - 1n].depth).to.equal(1);
   });
 
   it('Should parse the end-user cert DER encoding', async function () {
@@ -133,8 +142,8 @@ describe.only('DerParser contract functions', function () {
     expect(tlvs[0].depth).to.equal(0);
     expect(tlvs[1].tag.tagType).to.equal('SEQUENCE');
     expect(tlvs[1].depth).to.equal(1);
-    expect(tlvs[endUserCert.tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
-    expect(tlvs[endUserCert.tlvLength - 1].depth).to.equal(1);
+    expect(tlvs[endUserCert.tlvLength - 1n].tag.tagType).to.equal('BIT_STRING');
+    expect(tlvs[endUserCert.tlvLength - 1n].depth).to.equal(1);
   });
 
   it('Should parse the end-user mock Digicert cert DER encoding', async function () {
@@ -146,8 +155,8 @@ describe.only('DerParser contract functions', function () {
     expect(tlvs[0].depth).to.equal(0);
     expect(tlvs[1].tag.tagType).to.equal('SEQUENCE');
     expect(tlvs[1].depth).to.equal(1);
-    expect(tlvs[endUserCert.tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
-    expect(tlvs[endUserCert.tlvLength - 1].depth).to.equal(1);
+    expect(tlvs[endUserCert.tlvLength - 1n].tag.tagType).to.equal('BIT_STRING');
+    expect(tlvs[endUserCert.tlvLength - 1n].depth).to.equal(1);
   });
 
   it('Should parse the end-user mock Entrust cert DER encoding', async function () {
@@ -159,8 +168,8 @@ describe.only('DerParser contract functions', function () {
     expect(tlvs[0].depth).to.equal(0);
     expect(tlvs[1].tag.tagType).to.equal('SEQUENCE');
     expect(tlvs[1].depth).to.equal(1);
-    expect(tlvs[endUserCert.tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
-    expect(tlvs[endUserCert.tlvLength - 1].depth).to.equal(1);
+    expect(tlvs[endUserCert.tlvLength - 1n].tag.tagType).to.equal('BIT_STRING');
+    expect(tlvs[endUserCert.tlvLength - 1n].depth).to.equal(1);
   });
 
   it('Should verify the signature over the users ethereum address', async function () {

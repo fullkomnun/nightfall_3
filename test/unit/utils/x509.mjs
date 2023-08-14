@@ -46,16 +46,10 @@ well-structured TLV object
 */
 
 export function makeTlv(struct) {
-  const {
-    start: _start,
-    headerLength: _headerLength,
-    tag: _tag,
-    _length,
-    value,
-    octets,
-    depth: _depth,
-  } = struct;
+  const [_start, _headerLength, _tag, _length, value, octets, _depth] = struct;
   const { isConstructed, tagType } = _tag;
+  // console.log(`TLV is `, struct);
+  // console.log(`_length is ${_length}`);
   const tlv = {
     start: BigInt.asUintN(64, _start),
     headerLength: BigInt.asUintN(64, _headerLength),

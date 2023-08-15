@@ -1,7 +1,7 @@
 /* eslint-disable no-empty-function */
 import { expect } from 'chai';
 import hardhat from 'hardhat';
-import { time } from '@nomicfoundation/hardhat-network-helpers';
+import { time } from '@nomicfoundation/hardhat-toolbox/network-helpers.js';
 import { packBlockInfo, unpackBlockInfo } from 'common-files/utils/block-utils.mjs';
 import { packHistoricRoots, packTransactionInfo } from 'common-files/classes/transaction.mjs';
 import {

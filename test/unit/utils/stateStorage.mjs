@@ -1,6 +1,6 @@
 /* eslint-disable no-empty-function */
 import hardhat from 'hardhat';
-import { setStorageAt, time } from '@nomicfoundation/hardhat-network-helpers';
+import { setStorageAt, time } from '@nomicfoundation/hardhat-toolbox/network-helpers.js';
 
 const { ethers } = hardhat;
 

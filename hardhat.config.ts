@@ -1,11 +1,12 @@
 import { HardhatUserConfig } from 'hardhat/types';
-import '@nomicfoundation/hardhat-ethers';
+// import '@nomicfoundation/hardhat-ethers';
 // import 'hardhat-contract-sizer';
 // import 'hardhat-storage-layout';
 import '@openzeppelin/hardhat-upgrades';
-import 'solidity-coverage';
-import 'hardhat-gas-reporter';
-import '@nomicfoundation/hardhat-chai-matchers';
+// import 'solidity-coverage';
+// import 'hardhat-gas-reporter';
+// import '@nomicfoundation/hardhat-chai-matchers';
+import "@nomicfoundation/hardhat-toolbox";
 
 const config: HardhatUserConfig = {
   solidity: {

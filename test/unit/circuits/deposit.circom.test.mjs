@@ -1,4 +1,4 @@
-// import chai from 'chai';
+import chai from 'chai';
 import path from 'path';
 import circomTester from 'circom_tester';
 import { fileURLToPath } from 'url';
@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const tester = circomTester.wasm;
-// const { expect } = chai;
+const { expect } = chai;
 
 describe('Test deposit circuit', function () {
   this.timeout(60000);

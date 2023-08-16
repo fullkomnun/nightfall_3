@@ -4,7 +4,7 @@ version: '3.5'
 # It acts as an override file for docker-compose.yml
 services:
   blockchain:
-    image: trufflesuite/ganache:v7.7.3
+    image: trufflesuite/ganache:v7.9.0
     ports:
       - 8546:8546
     command:

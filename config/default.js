@@ -217,7 +217,7 @@ module.exports = {
 
   MINIMUM_TRANSACTION_SLOTS: 16,
   MAX_BLOCK_SIZE: Number(process.env.MAX_BLOCK_SIZE) || 50000,
-  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 100,
+  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 600,
   VK_IDS: {
     deposit: {
       numberNullifiers: 0,

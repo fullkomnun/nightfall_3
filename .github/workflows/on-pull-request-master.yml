@@ -8,6 +8,7 @@ env:
   DOCKER_BUILDKIT: 1 # enable docker buildkit
   # Whitelisting is disabled during testing for backwards compatibility with these tests.  It must not be disabled in production.
   WHITELISTING: disable
+  AUTOSTART_RETRIES: 600
 
 jobs:
   dependency-review:
@@ -119,7 +120,7 @@ jobs:
         with:
           command: |
             docker wait nightfall_3_deployer_1
-          attempt_limit: 100
+          attempt_limit: 200
           attempt_delay: 20000
 
       - name: Debug logs - after image builds
@@ -208,7 +209,7 @@ jobs:
         with:
           command: |
             docker wait nightfall_3_deployer_1
-          attempt_limit: 100
+          attempt_limit: 200
           attempt_delay: 20000
 
       - name: Debug logs - after image builds
@@ -255,7 +256,7 @@ jobs:
         with:
           command: |
             docker wait nightfall_3_deployer_1
-          attempt_limit: 100
+          attempt_limit: 200
           attempt_delay: 20000
 
       - name: Debug logs - after image builds
@@ -303,7 +304,7 @@ jobs:
         with:
           command: |
             docker wait nightfall_3_deployer_1
-          attempt_limit: 100
+          attempt_limit: 200
           attempt_delay: 20000
 
       - name: Debug logs - after image builds
@@ -351,7 +352,7 @@ jobs:
         with:
           command: |
             docker wait nightfall_3_deployer_1
-          attempt_limit: 100
+          attempt_limit: 200
           attempt_delay: 20000
 
       - name: Debug logs - after image builds
@@ -398,7 +399,7 @@ jobs:
         with:
           command: |
             docker wait nightfall_3_deployer_1
-          attempt_limit: 100
+          attempt_limit: 200
           attempt_delay: 20000
 
       - name: Debug logs - after image builds
@@ -445,7 +446,7 @@ jobs:
         with:
           command: |
             docker wait nightfall_3_deployer_1
-          attempt_limit: 100
+          attempt_limit: 200
           attempt_delay: 20000
 
       - name: Debug logs - after image builds
@@ -492,7 +493,7 @@ jobs:
         with:
           command: |
             docker wait nightfall_3_deployer_1
-          attempt_limit: 100
+          attempt_limit: 200
           attempt_delay: 20000
 
       - name: Debug logs - after image builds
@@ -538,7 +539,7 @@ jobs:
         with:
           command: |
             docker wait nightfall_3_deployer_1
-          attempt_limit: 100
+          attempt_limit: 200
           attempt_delay: 20000
 
       - name: Debug logs - after image builds
@@ -585,7 +586,7 @@ jobs:
         with:
           command: |
             docker wait nightfall_3_deployer_1
-          attempt_limit: 100
+          attempt_limit: 200
           attempt_delay: 20000
 
       - name: Debug logs - after image builds
@@ -635,7 +636,7 @@ jobs:
         with:
           command: |
             docker wait nightfall_3_deployer_1
-          attempt_limit: 100
+          attempt_limit: 200
           attempt_delay: 20000
 
       - name: debug logs - after container startup
@@ -686,7 +687,7 @@ jobs:
         with:
           command: |
             docker wait nightfall_3_deployer_1
-          attempt_limit: 100
+          attempt_limit: 200
           attempt_delay: 20000
 
       - name: Debug logs - after image builds
@@ -754,7 +755,7 @@ jobs:
         with:
           command: |
             docker wait nightfall_3_deployer_1
-          attempt_limit: 100
+          attempt_limit: 200
           attempt_delay: 20000
 
       - name: Debug logs - after container startup
@@ -801,7 +802,7 @@ jobs:
         with:
           command: |
             docker wait nightfall_3_deployer_1
-          attempt_limit: 100
+          attempt_limit: 200
           attempt_delay: 20000
 
       - name: Debug logs - after container startup
@@ -820,7 +821,7 @@ jobs:
             curl -i http://localhost:8092/healthcheck
           attempt_limit: 10
           attempt_delay: 30000
-      
+
       - name: 'Check challenger liveliness'
         uses: Wandalen/wretry.action@v1.0.36
         with:
@@ -848,7 +849,6 @@ jobs:
             ./test-apps.log
             ./test-proposer.log
 
-
   periodic-payment-test:
     env:
       CONFIRMATIONS: 1
@@ -870,7 +870,7 @@ jobs:
         with:
           command: |
             docker wait nightfall_3_deployer_1
-          attempt_limit: 100
+          attempt_limit: 200
           attempt_delay: 20000
 
       - name: Debug logs - after image builds

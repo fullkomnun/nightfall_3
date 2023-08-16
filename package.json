@@ -64,6 +64,8 @@
     "@commitlint/cli": "^12.1.1",
     "@commitlint/config-conventional": "^12.1.1",
     "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "@openzeppelin/contracts": "^4.9.3",
+    "@openzeppelin/contracts-upgradeable": "^4.9.3",
     "@openzeppelin/hardhat-upgrades": "^2.0.1",
     "@types/mocha": "^9.1.1",
     "@types/node": "^18.7.17",

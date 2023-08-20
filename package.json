@@ -97,7 +97,7 @@
     "ts-node": "^10.9.1",
     "typechain": "^8.1.0",
     "web3": "^1.7.5",
-    "ws": "^7.5.0"
+    "ws": "^8.13.0"
   },
   "dependencies": {
     "async-mutex": "^0.4.0",

@@ -38,14 +38,8 @@
     "@truffle/hdwallet-provider": "^2.0.10"
   },
   "overrides": {
-    "web3-bzz": {
-      "got": "11.8.5"
-    },
-    "swarm-js": {
-      "got": "11.8.5"
-    },
-    "yargs": {
-      "yargs-parser": "5.0.1"
+    "web3-validator": {
+      "zod": "3.21.4"
     }
   }
 }

@@ -55,8 +55,8 @@
     ]
   },
   "overrides": {
-    "swarm-js": {
-      "got": "11.8.5"
+    "web3": {
+      "web3-validator": "1.0.2"
     }
   }
 }

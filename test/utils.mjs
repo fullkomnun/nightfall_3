@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 /* ignore unused exports */
 import axios from 'axios';
-import Web3 from 'web3';
+import { Web3 } from 'web3';
 import chai from 'chai';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
@@ -166,14 +166,14 @@ export class Web3Client {
 
   // This only works with Ganache but it can move block time forwards
   async timeJump(secs) {
-    await this.web3.currentProvider.send({
+    await this.web3.currentProvider.request({
       jsonrpc: '2.0',
       method: 'evm_increaseTime',
       params: [secs],
       id: 0,
     });
 
-    await this.web3.currentProvider.send({
+    await this.web3.currentProvider.request({
       jsonrpc: '2.0',
       method: 'evm_mine',
       params: [],

@@ -96,7 +96,7 @@
     "reconnecting-websocket": "^4.4.0",
     "ts-node": "^10.9.1",
     "typechain": "^8.1.0",
-    "web3": "^1.7.5",
+    "web3": "^4.1.0",
     "ws": "^8.13.0"
   },
   "dependencies": {

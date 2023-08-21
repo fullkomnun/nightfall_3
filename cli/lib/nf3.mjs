@@ -4,7 +4,7 @@
 
 import axios from 'axios';
 import Queue from 'queue';
-import Web3 from 'web3';
+import { Web3 } from 'web3';
 import WebSocket from 'ws';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import EventEmitter from 'events';
@@ -1643,7 +1643,7 @@ class Nf3 {
     */
   getL1Balance(address) {
     return this.web3.eth.getBalance(address).then(function (balanceWei) {
-      return Web3.utils.fromWei(balanceWei);
+      return Web3.utils.fromWei(balanceWei, 'ether');
     });
   }
 

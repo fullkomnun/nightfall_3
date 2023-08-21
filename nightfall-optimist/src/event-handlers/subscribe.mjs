@@ -3,7 +3,7 @@
 /**
  * Module to subscribe to blockchain events
  */
-import WebSocket from 'ws';
+import WebSocketServer from 'ws';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import constants from 'common-files/constants/index.mjs';
@@ -16,7 +16,7 @@ const {
   STATE_CONTRACT_NAME,
 } = constants;
 const { WEBSOCKET_PORT, WEBSOCKET_PING_TIME } = config;
-const wss = new WebSocket.Server({ port: WEBSOCKET_PORT });
+const wss = new WebSocketServer({ port: WEBSOCKET_PORT });
 
 /**
  * Function that does some standardised setting up of a websocket's events.

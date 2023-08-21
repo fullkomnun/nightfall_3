@@ -29,8 +29,8 @@
     "mocha": "^10.0.0"
   },
   "overrides": {
-    "web3-validator": {
-      "zod": "3.21.4"
+    "web3": {
+      "web3-validator": "1.0.2"
     }
   }
 }

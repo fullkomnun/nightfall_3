@@ -46,8 +46,9 @@ function setupWebsocketEvents(ws, socketName) {
   ws.on('open', () => {
     logger.debug(`OPEN ${socketName}`);
   });
-  ws.on('close', err => {
-    logger.debug(`CLOSE ${socketName} ${err}`);
+  ws.on('close', (code, data) => {
+    const reason = data.toString();
+    logger.debug(`CLOSE ${socketName} code: ${code}, reason: {${reason}}`);
     clearInterval(intervalID);
   });
 }
@@ -78,7 +79,8 @@ export async function startEventQueue(callback, ...arg) {
 
 export async function subscribeToChallengeWebSocketConnection(callback, ...args) {
   wss.on('connection', ws => {
-    ws.on('message', message => {
+    ws.on('message', (data, isBinary) => {
+      const message = isBinary ? data : data.toString();
       if (message === 'challenge') {
         setupWebsocketEvents(ws, 'challenge');
         callback(ws, args);
@@ -90,7 +92,8 @@ export async function subscribeToChallengeWebSocketConnection(callback, ...args)
 
 export async function subscribeToBlockAssembledWebSocketConnection(callback, ...args) {
   wss.on('connection', ws => {
-    ws.on('message', message => {
+    ws.on('message', (data, isBinary) => {
+      const message = isBinary ? data : data.toString();
       if (message === 'blocks') {
         setupWebsocketEvents(ws, 'proposer');
         callback(ws, args);
@@ -102,7 +105,8 @@ export async function subscribeToBlockAssembledWebSocketConnection(callback, ...
 
 export async function subscribeToInstantWithDrawalWebSocketConnection(callback, ...args) {
   wss.on('connection', ws => {
-    ws.on('message', message => {
+    ws.on('message', (data, isBinary) => {
+      const message = isBinary ? data : data.toString();
       if (message === 'instant') {
         setupWebsocketEvents(ws, 'liquidity provider');
         callback(ws, args);
@@ -114,7 +118,8 @@ export async function subscribeToInstantWithDrawalWebSocketConnection(callback, 
 
 export async function subscribeToProposedBlockWebSocketConnection(callback, ...args) {
   wss.on('connection', ws => {
-    ws.on('message', message => {
+    ws.on('message', (data, isBinary) => {
+      const message = isBinary ? data : data.toString();
       try {
         if (JSON.parse(message).type === 'sync') {
           logger.info(`Subscribing to ProposedBlock`);

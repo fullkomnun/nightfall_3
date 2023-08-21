@@ -257,7 +257,8 @@ export async function proposerStats(optimistUrls, proposersStats, nf3Proposer) {
     proposersStats.proposersBlocks = proposersBlocks;
     // eslint-disable-next-line no-param-reassign
     proposersStats.sprints = 0;
-    nf3Proposer.web3.eth.subscribe('logs', { address: stateAddress }).on('data', async log => {
+    const subscription = await nf3Proposer.web3.eth.subscribe('logs', { address: stateAddress });
+    subscription.on('data', async log => {
       let proposerBlock = proposersBlocks.find(
         // eslint-disable-next-line no-loop-func
         p => p.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
@@ -301,6 +302,7 @@ export async function proposerStats(optimistUrls, proposersStats, nf3Proposer) {
         console.log(`  ${pb.proposer} : ${pb.blocks}`);
       }
     });
+    subscription.on('error', error => logger.error(`Error when subscribing to 'logs': ${error}`));
 
     // eslint-disable-next-line no-constant-condition
     while (true) {

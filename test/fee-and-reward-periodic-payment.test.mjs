@@ -66,7 +66,7 @@ describe('Periodic Payment', () => {
 
     erc20Address = await nf3User.getContractAddress('ERC20Mock');
     const stateAddress = await nf3User.stateContractAddress;
-    web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+    await web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
     logProposerStats();
   });
 

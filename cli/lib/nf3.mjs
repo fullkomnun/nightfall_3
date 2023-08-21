@@ -961,7 +961,7 @@ class Nf3 {
     */
   close() {
     this.intervalIDs.forEach(intervalID => clearInterval(intervalID));
-    this.web3.currentProvider.connection.close();
+    this.web3.currentProvider?.disconnect();
     this.websockets.forEach(websocket => websocket.close());
   }
 

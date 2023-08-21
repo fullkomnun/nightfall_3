@@ -70,7 +70,7 @@ describe('Optimist synchronisation tests', () => {
     erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
 
     stateAddress = await nf3Users[0].stateContractAddress;
-    web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+    await web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
   });
 
   describe('With and without a bad block', () => {

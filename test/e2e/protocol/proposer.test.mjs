@@ -84,8 +84,8 @@ describe('Basic Proposer tests', () => {
     stateAddress = nf3User.stateContractAddress;
     stateContractInstance = nf3User.stateContract;
 
-    web3Client.subscribeTo('logs', eventLogs, { address: shieldAddress });
-    web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+    await web3Client.subscribeTo('logs', eventLogs, { address: shieldAddress });
+    await web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
     let proposer = await getProposer(secondProposer.ethereumAddress);
     if (proposer.thisAddress !== '0x0000000000000000000000000000000000000000') {

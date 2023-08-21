@@ -188,7 +188,7 @@ async function start() {
       await executeMultiSigTransaction(approval.slice(0, SIGNATURE_THRESHOLD), executor);
     }
   }
-  web3.currentProvider.connection.close();
+  web3.currentProvider?.disconnect();
   return JSON.stringify(approved);
 }
 

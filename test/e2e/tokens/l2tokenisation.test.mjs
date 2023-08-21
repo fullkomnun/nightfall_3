@@ -86,7 +86,7 @@ describe('L2 Tokenisation tests', () => {
     ).hex(32);
 
     stateAddress = await nf3Users[0].stateContractAddress;
-    web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+    await web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
     await nf3Users[0].deposit(erc20Address, tokenType, 3 * transferValue, tokenId, 0);
 

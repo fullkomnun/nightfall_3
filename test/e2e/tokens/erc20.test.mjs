@@ -91,7 +91,7 @@ describe('ERC20 tests', () => {
       maxWithdrawValue.find(e => e.name === process.env.ERC20_COIN)?.address.toLowerCase() ||
       (await nf3User.getContractAddress('ERC20Mock'));
     stateAddress = await nf3User.stateContractAddress;
-    web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+    await web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
     // if we're using a real blockchain, there may be some transactions left from the last run so clear them out
     const nodeInfo = await web3Client.getInfo();
     if (!nodeInfo.includes('TestRPC')) {
@@ -434,7 +434,7 @@ describe('ERC20 tests', () => {
         logs.instantWithdraw += 1;
       });
 
-      web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+      await web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
     });
 
     it('Should not allow instant withdrawal because withdrawal is not in block yet', async function () {

@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "async-mutex": "^0.3.2",
-    "axios": "^0.21.4",
+    "axios": "^1.4.0",
     "bip39": "^3.0.4",
     "body-parser": "^1.19.2",
     "chalk": "^4.1.2",

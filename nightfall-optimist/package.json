@@ -30,7 +30,7 @@
     ]
   },
   "dependencies": {
-    "axios": "^0.21.4",
+    "axios": "^1.4.0",
     "body-parser": "^1.20.2",
     "common-files": "file:../common-files",
     "config": "^3.3.1",

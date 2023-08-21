@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "amqplib": "^0.8.0",
-    "axios": "^0.26.1",
+    "axios": "^1.4.0",
     "body-parser": "^1.20.2",
     "circomlib": "^2.0.5",
     "cls-hooked": "^4.2.2",

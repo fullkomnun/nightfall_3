@@ -164,7 +164,7 @@ services:
       - nightfall_network
 
   mongodb:
-    image: mongo:4.4.1-bionic
+    image: mongo:7-jammy
     hostname: mongodb
     ports:
       - 27017:27017

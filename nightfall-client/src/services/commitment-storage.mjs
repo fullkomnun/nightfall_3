@@ -150,7 +150,7 @@ export async function getCommitmentBySalt(salt) {
   const db = connection.db(COMMITMENTS_DB);
   const commitments = await db
     .collection(COMMITMENTS_COLLECTION)
-    .find({ 'preimage.salt': generalise(salt).hex(32) })
+    .find({ 'preimage.salt': generalise(salt).hex(32) }, { useBigInt64: true })
     .toArray();
   return commitments;
 }
@@ -158,7 +158,9 @@ export async function getCommitmentBySalt(salt) {
 export async function getCommitmentByHash(commitment) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  return db.collection(COMMITMENTS_COLLECTION).findOne({ _id: commitment.hash.hex(32) });
+  return db
+    .collection(COMMITMENTS_COLLECTION)
+    .findOne({ _id: commitment.hash.hex(32) }, { useBigInt64: true });
 }
 
 // function to retrieve commitments by transactionHash of the block in which they were
@@ -166,25 +168,32 @@ export async function getCommitmentByHash(commitment) {
 export async function getCommitmentsByTransactionHashL1(transactionHashCommittedL1) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  return db.collection(COMMITMENTS_COLLECTION).find({ transactionHashCommittedL1 }).toArray();
+  return db
+    .collection(COMMITMENTS_COLLECTION)
+    .find({ transactionHashCommittedL1 }, { useBigInt64: true })
+    .toArray();
 }
 // function to retrieve commitments by transactionhash of the block in which they were
 // nullified
 export async function getNullifiedByTransactionHashL1(transactionHashNullifiedL1) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  return db.collection(COMMITMENTS_COLLECTION).find({ transactionHashNullifiedL1 }).toArray();
+  return db
+    .collection(COMMITMENTS_COLLECTION)
+    .find({ transactionHashNullifiedL1 }, { useBigInt64: true })
+    .toArray();
 }
 
 export async function getSiblingInfo(commitment) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  return db
-    .collection(COMMITMENTS_COLLECTION)
-    .findOne(
-      { _id: commitment.hash.hex(32) },
-      { projection: { siblingPath: 1, root: 1, order: 1, isOnChain: 1, leafIndex: 1 } },
-    );
+  return db.collection(COMMITMENTS_COLLECTION).findOne(
+    { _id: commitment.hash.hex(32) },
+    {
+      projection: { siblingPath: 1, root: 1, order: 1, isOnChain: 1, leafIndex: 1 },
+      useBigInt64: true,
+    },
+  );
 }
 
 /*
@@ -265,6 +274,7 @@ export async function getWalletBalanceUnfiltered() {
     'preimage.tokenId': 1,
     'preimage.value': 1,
     _id: 0,
+    useBigInt64: true,
   };
   const wallet = await db.collection(COMMITMENTS_COLLECTION).find(query, options).toArray();
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
@@ -310,6 +320,7 @@ export async function getWalletBalance(compressedZkpPublicKey, ercList) {
     'preimage.tokenId': 1,
     'preimage.value': 1,
     _id: 0,
+    useBigInt64: true,
   };
   const wallet = await db.collection(COMMITMENTS_COLLECTION).find(query, options).toArray();
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
@@ -372,6 +383,7 @@ export async function getWalletPendingDepositBalance(compressedZkpPublicKey, erc
     'preimage.tokenId': 1,
     'preimage.value': 1,
     _id: 0,
+    useBigInt64: true,
   };
   const wallet = await db.collection(COMMITMENTS_COLLECTION).find(query, options).toArray();
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
@@ -433,6 +445,7 @@ export async function getWalletPendingSpentBalance(compressedZkpPublicKey, ercLi
     'preimage.tokenId': 1,
     'preimage.value': 1,
     _id: 0,
+    useBigInt64: true,
   };
   const wallet = await db.collection(COMMITMENTS_COLLECTION).find(query, options).toArray();
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
@@ -496,6 +509,7 @@ export async function getWalletCommitments(compressedZkpPublicKeyList, ercList) 
     'preimage.tokenId': 1,
     'preimage.value': 1,
     _id: 0,
+    useBigInt64: true,
   };
   const wallet = await db.collection(COMMITMENTS_COLLECTION).find(query, options).toArray();
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
@@ -544,7 +558,10 @@ export async function getCommitmentsByCircuitHash(circuitHash) {
     isNullifiedOnChain: { $gte: 0 },
   };
   // Get associated nullifiers of commitments that have been spent on-chain and are used for withdrawals.
-  const withdraws = await db.collection(COMMITMENTS_COLLECTION).find(query).toArray();
+  const withdraws = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .find(query, { useBigInt64: true })
+    .toArray();
   // To check validity we need the withdrawal transaction, the block the transaction is in and all other
   // transactions in the block. We need this for on-chain validity checks.
   const blockTxs = await Promise.all(
@@ -613,13 +630,16 @@ export async function deleteCommitments(commitments) {
 async function getAvailableCommitments(db, compressedZkpPublicKey, ercAddress, tokenId) {
   return db
     .collection(COMMITMENTS_COLLECTION)
-    .find({
-      compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
-      'preimage.ercAddress': ercAddress.hex(32),
-      'preimage.tokenId': tokenId.hex(32),
-      isNullified: false,
-      isPendingNullification: false,
-    })
+    .find(
+      {
+        compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
+        'preimage.ercAddress': ercAddress.hex(32),
+        'preimage.tokenId': tokenId.hex(32),
+        isNullified: false,
+        isPendingNullification: false,
+      },
+      { useBigInt64: true },
+    )
     .toArray();
 }
 
@@ -998,8 +1018,9 @@ export async function insertCommitmentsAndResync(listOfCommitments) {
   // 3. remove the commitments found in the database from the list
   const onlyNewCommitments = listOfCommitments.filter(
     commitment =>
-      commitmentsFromDb.find(commitmentFound => commitmentFound._id === commitment._id) ===
-      undefined,
+      commitmentsFromDb.find(commitmentFound => commitmentFound._id === commitment._id, {
+        useBigInt64: true,
+      }) === undefined,
   );
 
   if (onlyNewCommitments.length > 0) {
@@ -1044,7 +1065,7 @@ export async function getCommitmentsAvailableByHash(hashes, compressedZkpPublicK
     isPendingNullification: false,
     isNullifiedOnChain: -1,
   };
-  return db.collection(COMMITMENTS_COLLECTION).find(query).toArray();
+  return db.collection(COMMITMENTS_COLLECTION).find(query, { useBigInt64: true }).toArray();
 }
 
 /**
@@ -1056,7 +1077,10 @@ export async function getCommitmentsAvailableByHash(hashes, compressedZkpPublicK
 export async function getCommitments() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  const allCommitments = await db.collection(COMMITMENTS_COLLECTION).find().toArray();
+  const allCommitments = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .find({ useBigInt64: true })
+    .toArray();
   return allCommitments;
 }
 
@@ -1070,7 +1094,7 @@ export async function getCommitmentsDepositedRollbacked(compressedZkpPublicKey) 
     isDeposited: true,
   };
 
-  return db.collection(COMMITMENTS_COLLECTION).find(query).toArray();
+  return db.collection(COMMITMENTS_COLLECTION).find(query, { useBigInt64: true }).toArray();
 }
 
 // saves a transaction with extended information about nullifiers and commitments

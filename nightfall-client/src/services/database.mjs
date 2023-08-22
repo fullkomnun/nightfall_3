@@ -154,7 +154,7 @@ export async function findBlocksFromBlockNumberL2(blockNumberL2) {
   const query = { blockNumberL2: { $gte: Number(blockNumberL2) } };
   return db
     .collection(SUBMITTED_BLOCKS_COLLECTION)
-    .find(query, { sort: { blockNumberL2: 1 })
+    .find(query, { sort: { blockNumberL2: 1 } })
     .toArray();
 }
 

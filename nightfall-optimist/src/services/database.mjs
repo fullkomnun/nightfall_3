@@ -1,3 +1,4 @@
+/* eslint-disable no-use-before-define */
 /**
  * Functions for storing blockchain data that the optimist application needs to
  * remember wholesale because otherwise it would have to be constructed in real-
@@ -280,6 +281,7 @@ export async function saveTransaction(_transaction) {
     ..._transaction,
     mempool,
     blockNumberL2,
+    proof: _transaction.proof.map(x => x.toString()),
   };
   logger.debug({
     msg: 'Saving transaction',
@@ -375,8 +377,19 @@ export async function getMempoolTransactionsSortedByFee() {
     .collection(TRANSACTIONS_COLLECTION)
     .find({ mempool: true }, { _id: 0 })
     .sort({ fee: -1 })
-    .toArray();
+    .toArray()
+    .then(convertProofsToBigints);
 }
+
+const convertProofsToBigints = txs => {
+  for (const tx of txs) {
+    tx.proof = tx.proof.map(value => {
+      return BigInt(value);
+    });
+  }
+
+  return txs;
+};
 
 /**
  * Find a transaction in the mempool, given some filters

@@ -175,10 +175,25 @@ export async function conditionalMakeBlock(proposer) {
           blockSize,
         });
 
-        // propose this block to the Shield contract here
-        const unsignedProposeBlockTransaction = await (
-          await waitForContract(STATE_CONTRACT_NAME)
-        ).methods
+        const stateContract = await waitForContract(STATE_CONTRACT_NAME);
+        logger.debug(
+          `Block.buildSolidityStruct(block) = ${JSON.stringify(
+            Block.buildSolidityStruct(block),
+            null,
+            2,
+          )}`,
+        );
+        transactions.forEach(t =>
+          logger.debug(
+            `Transaction.buildSolidityStruct(t) = ${JSON.stringify(
+              Transaction.buildSolidityStruct(t),
+              null,
+              2,
+            )}`,
+          ),
+        );
+        // propose this block to the State contract here
+        const unsignedProposeBlockTransaction = await stateContract.methods
           .proposeBlock(
             Block.buildSolidityStruct(block),
             transactions.map(t => Transaction.buildSolidityStruct(t)),

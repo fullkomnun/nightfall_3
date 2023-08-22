@@ -36,7 +36,7 @@ function ping(ws) {
 
 function createQueue(options) {
   const queue = new Queue(options);
-  queue.on('error', error => logger.error({ msg: 'Error caught by queue', error }));
+  queue.on('error', error => logger.error({ msg: 'Error caught by queue', err: error }));
 
   return queue;
 }

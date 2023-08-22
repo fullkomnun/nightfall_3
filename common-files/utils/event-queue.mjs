@@ -26,7 +26,9 @@ import { web3 } from './contract.mjs';
 
 function createQueue(options) {
   const queue = new Queue(options);
-  queue.on('error', error => logger.error({ msg: 'Error caught by queue', err: error }));
+  queue.addEventListener('error', error =>
+    logger.error({ msg: 'Error caught by queue', err: error }),
+  );
 
   return queue;
 }

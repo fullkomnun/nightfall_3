@@ -290,12 +290,7 @@ export async function saveTransaction(_transaction) {
     transactionHash: _transaction.transactionHash,
     blockNumber: _transaction.blockNumber,
   });
-  logger.debug(
-    {
-      msg: 'Saving transaction full',
-    },
-    JSON.stringify(_transaction, null, 2),
-  );
+  logger.debug(JSON.stringify(_transaction, null, 2));
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   return db.collection(TRANSACTIONS_COLLECTION).insertOne(transaction);

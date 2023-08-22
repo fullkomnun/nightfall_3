@@ -35,7 +35,7 @@ const main = async () => {
     await startEventQueue(queueManager, eventHandlers, proposer);
 
     // enqueue the block-assembler every time the queue becomes empty
-    queues[0].on('end', () => {
+    queues[0].addEventListener('end', () => {
       // We do the proposer isMe check here to fail fast instead of re-enqueing.
       // We check if the queue[2] is empty, this is safe it is manually enqueued/dequeued.
       if (proposer.isMe && queues[2].length === 0) {

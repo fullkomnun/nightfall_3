@@ -368,7 +368,7 @@ export async function getMempoolTransactions() {
     .collection(TRANSACTIONS_COLLECTION)
     .find(query)
     .toArray()
-    .then(txs => txs.map(tx => convertProofsToBigints(tx)));
+    .then(txs => txs.map(convertProofsToBigints));
 }
 
 /**
@@ -382,10 +382,11 @@ export async function getMempoolTransactionsSortedByFee() {
     .find({ mempool: true }, { _id: 0 })
     .sort({ fee: -1 })
     .toArray()
-    .then(txs => txs.map(tx => convertProofsToBigints(tx)));
+    .then(txs => txs.map(convertProofsToBigints));
 }
 
 function convertProofsToBigints(tx) {
+  if (!tx) return null;
   // eslint-disable-next-line no-param-reassign
   return {
     ...tx,
@@ -403,10 +404,7 @@ async function getMempoolTransaction(query) {
   const db = connection.db(OPTIMIST_DB);
   // eslint-disable-next-line no-param-reassign
   query.mempool = true;
-  return db
-    .collection(TRANSACTIONS_COLLECTION)
-    .findOne(query)
-    .then(tx => convertProofsToBigints(tx));
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(query).then(convertProofsToBigints);
 }
 
 /**
@@ -443,10 +441,7 @@ export async function getTransactionByTransactionHash(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHash };
-  return db
-    .collection(TRANSACTIONS_COLLECTION)
-    .findOne(query)
-    .then(tx => convertProofsToBigints(tx));
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(query).then(convertProofsToBigints);
 }
 
 /**
@@ -460,7 +455,7 @@ export async function getTransactionsByTransactionHashes(transactionHashes) {
     .collection(TRANSACTIONS_COLLECTION)
     .find(query)
     .toArray()
-    .then(txs => txs.map(tx => convertProofsToBigints(tx)));
+    .then(txs => txs.map(convertProofsToBigints));
   // Create a dictionary where we will store the correct position ordering
   const positions = {};
   // Use the ordering of txHashes in the block to fill the dictionary-indexed by txHash
@@ -486,7 +481,7 @@ export async function getTransactionsByTransactionHashesByL2Block(transactionHas
     .collection(TRANSACTIONS_COLLECTION)
     .find(query)
     .toArray()
-    .then(txs => txs.map(tx => convertProofsToBigints(tx)));
+    .then(txs => txs.map(convertProofsToBigints));
   // Create a dictionary where we will store the correct position ordering
   const positions = {};
   // Use the ordering of txHashes in the block to fill the dictionary-indexed by txHash
@@ -535,10 +530,7 @@ export async function getTransactionL2ByCommitment(commitmentHash, blockNumberL2
     commitments: { $in: [commitmentHash] },
     blockNumberL2: { $gt: -1, $ne: blockNumberL2OfTx },
   };
-  return db
-    .collection(TRANSACTIONS_COLLECTION)
-    .findOne(query)
-    .then(tx => convertProofsToBigints(tx));
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(query).then(convertProofsToBigints);
 }
 
 export async function getTransactionL2ByNullifier(nullifierHash, blockNumberL2OfTx) {
@@ -548,10 +540,7 @@ export async function getTransactionL2ByNullifier(nullifierHash, blockNumberL2Of
     nullifiers: { $in: [nullifierHash] },
     blockNumberL2: { $gt: -1, $ne: blockNumberL2OfTx },
   };
-  return db
-    .collection(TRANSACTIONS_COLLECTION)
-    .findOne(query)
-    .then(tx => convertProofsToBigints(tx));
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(query).then(convertProofsToBigints);
 }
 
 /**
@@ -685,5 +674,5 @@ export async function getTransactionHashSiblingInfo(transactionHash) {
         },
       },
     )
-    .then(tx => convertProofsToBigints(tx));
+    .then(convertProofsToBigints);
 }

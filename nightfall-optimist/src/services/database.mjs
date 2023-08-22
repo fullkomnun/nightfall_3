@@ -364,7 +364,11 @@ export async function getMempoolTransactions() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { mempool: true }; // Transactions in the mempool
-  return db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
+  return db
+    .collection(TRANSACTIONS_COLLECTION)
+    .find(query)
+    .toArray()
+    .then(txs => txs.map(tx => convertProofsToBigints(tx)));
 }
 
 /**
@@ -378,18 +382,18 @@ export async function getMempoolTransactionsSortedByFee() {
     .find({ mempool: true }, { _id: 0 })
     .sort({ fee: -1 })
     .toArray()
-    .then(convertProofsToBigints);
+    .then(txs => txs.map(tx => convertProofsToBigints(tx)));
 }
 
-const convertProofsToBigints = txs => {
-  for (const tx of txs) {
-    tx.proof = tx.proof.map(value => {
+function convertProofsToBigints(tx) {
+  // eslint-disable-next-line no-param-reassign
+  return {
+    ...tx,
+    proof: tx.proof.map(value => {
       return BigInt(value);
-    });
-  }
-
-  return txs;
-};
+    }),
+  };
+}
 
 /**
  * Find a transaction in the mempool, given some filters
@@ -399,7 +403,10 @@ async function getMempoolTransaction(query) {
   const db = connection.db(OPTIMIST_DB);
   // eslint-disable-next-line no-param-reassign
   query.mempool = true;
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
+  return db
+    .collection(TRANSACTIONS_COLLECTION)
+    .findOne(query)
+    .then(tx => convertProofsToBigints(tx));
 }
 
 /**
@@ -436,7 +443,10 @@ export async function getTransactionByTransactionHash(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHash };
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
+  return db
+    .collection(TRANSACTIONS_COLLECTION)
+    .findOne(query)
+    .then(tx => convertProofsToBigints(tx));
 }
 
 /**
@@ -446,7 +456,11 @@ export async function getTransactionsByTransactionHashes(transactionHashes) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHash: { $in: transactionHashes } };
-  const returnedTransactions = await db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
+  const returnedTransactions = await db
+    .collection(TRANSACTIONS_COLLECTION)
+    .find(query)
+    .toArray()
+    .then(txs => txs.map(tx => convertProofsToBigints(tx)));
   // Create a dictionary where we will store the correct position ordering
   const positions = {};
   // Use the ordering of txHashes in the block to fill the dictionary-indexed by txHash
@@ -468,7 +482,11 @@ export async function getTransactionsByTransactionHashesByL2Block(transactionHas
     transactionHash: { $in: transactionHashes },
     blockNumberL2: { $eq: block.blockNumberL2 },
   };
-  const returnedTransactions = await db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
+  const returnedTransactions = await db
+    .collection(TRANSACTIONS_COLLECTION)
+    .find(query)
+    .toArray()
+    .then(txs => txs.map(tx => convertProofsToBigints(tx)));
   // Create a dictionary where we will store the correct position ordering
   const positions = {};
   // Use the ordering of txHashes in the block to fill the dictionary-indexed by txHash
@@ -517,7 +535,10 @@ export async function getTransactionL2ByCommitment(commitmentHash, blockNumberL2
     commitments: { $in: [commitmentHash] },
     blockNumberL2: { $gt: -1, $ne: blockNumberL2OfTx },
   };
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
+  return db
+    .collection(TRANSACTIONS_COLLECTION)
+    .findOne(query)
+    .then(tx => convertProofsToBigints(tx));
 }
 
 export async function getTransactionL2ByNullifier(nullifierHash, blockNumberL2OfTx) {
@@ -527,7 +548,10 @@ export async function getTransactionL2ByNullifier(nullifierHash, blockNumberL2Of
     nullifiers: { $in: [nullifierHash] },
     blockNumberL2: { $gt: -1, $ne: blockNumberL2OfTx },
   };
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
+  return db
+    .collection(TRANSACTIONS_COLLECTION)
+    .findOne(query)
+    .then(tx => convertProofsToBigints(tx));
 }
 
 /**
@@ -648,15 +672,18 @@ export async function setTransactionHashSiblingInfo(
 export async function getTransactionHashSiblingInfo(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(
-    { transactionHash },
-    {
-      projection: {
-        transactionHashSiblingPath: 1,
-        transactionHashLeafIndex: 1,
-        transactionHashesRoot: 1,
-        isOnChain: 1,
+  return db
+    .collection(TRANSACTIONS_COLLECTION)
+    .findOne(
+      { transactionHash },
+      {
+        projection: {
+          transactionHashSiblingPath: 1,
+          transactionHashLeafIndex: 1,
+          transactionHashesRoot: 1,
+          isOnChain: 1,
+        },
       },
-    },
-  );
+    )
+    .then(tx => convertProofsToBigints(tx));
 }

@@ -290,6 +290,12 @@ export async function saveTransaction(_transaction) {
     transactionHash: _transaction.transactionHash,
     blockNumber: _transaction.blockNumber,
   });
+  logger.debug(
+    {
+      msg: 'Saving transaction full',
+    },
+    JSON.stringify(_transaction, null, 2),
+  );
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   return db.collection(TRANSACTIONS_COLLECTION).insertOne(transaction);
@@ -376,7 +382,7 @@ export async function getMempoolTransactionsSortedByFee() {
   const db = connection.db(OPTIMIST_DB);
   return db
     .collection(TRANSACTIONS_COLLECTION)
-    .find({ mempool: true }, { _id: 0 })
+    .find({ mempool: true }, { _id: 0 }, { useBigInt64: true })
     .sort({ fee: -1 })
     .toArray();
 }

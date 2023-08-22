@@ -160,6 +160,7 @@ export async function conditionalMakeBlock(proposer) {
         const end = transactionBatches[i];
 
         const transactions = mempoolTransactions.slice(start, end);
+        transactions.forEach(t => logger.debug(`t = ${JSON.stringify(t, null, 2)}`));
 
         makeNow = false; // reset the makeNow so we only make one block with a short number of transactions
 

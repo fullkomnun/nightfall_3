@@ -44,7 +44,7 @@ export async function getCommit(commitHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { commitHash };
-  const commit = await db.collection(COMMIT_COLLECTION).findOne(query, { useBigInt64: true });
+  const commit = await db.collection(COMMIT_COLLECTION).findOne(query);
   if (commit)
     await db.collection(COMMIT_COLLECTION).updateOne(query, { $set: { retrieved: true } });
   return commit;
@@ -84,14 +84,14 @@ export async function getBlockByTransactionHash(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHashes: transactionHash };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).find(query, { useBigInt64: true }).toArray();
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).find(query).toArray();
 }
 
 export async function getBlockByTransactionHashL1(transactionHashL1) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHashL1 };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query, { useBigInt64: true });
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
 }
 
 /**
@@ -102,7 +102,7 @@ export async function getBlockByBlockHash(blockHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { blockHash };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query, { useBigInt64: true });
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
 }
 
 /**
@@ -114,7 +114,7 @@ export async function getBlockByRoot(root) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { root };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query, { useBigInt64: true });
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
 }
 
 /**
@@ -125,7 +125,7 @@ export async function getLatestBlockInfo() {
   const db = connection.db(OPTIMIST_DB);
   const [blockInfo] = await db
     .collection(SUBMITTED_BLOCKS_COLLECTION)
-    .find({}, { blockNumberL2: 1, blockHash: 1, blockNumber: 1, useBigInt64: true })
+    .find({}, { blockNumberL2: 1, blockHash: 1, blockNumber: 1 })
     .sort({ blockNumberL2: -1 })
     .limit(1)
     .toArray();
@@ -139,7 +139,7 @@ export async function getBlockByBlockNumberL2(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { blockNumberL2: Number(blockNumberL2) };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query, { useBigInt64: true });
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
 }
 
 /**
@@ -162,7 +162,7 @@ export async function findBlocksFromBlockNumberL2(blockNumberL2) {
   const query = { blockNumberL2: { $gte: Number(blockNumberL2) } };
   return db
     .collection(SUBMITTED_BLOCKS_COLLECTION)
-    .find(query, { sort: { blockNumberL2: -1 }, useBigInt64: true })
+    .find(query, { sort: { blockNumberL2: -1 } })
     .toArray();
 }
 
@@ -183,7 +183,7 @@ export async function getBlocks() {
   const db = connection.db(OPTIMIST_DB);
   return db
     .collection(SUBMITTED_BLOCKS_COLLECTION)
-    .find({}, { sort: { blockNumber: 1 }, useBigInt64: true })
+    .find({}, { sort: { blockNumber: 1 } })
     .toArray();
 }
 
@@ -212,7 +212,7 @@ export async function findBlocksByProposer(proposer) {
   const query = { proposer };
   return db
     .collection(SUBMITTED_BLOCKS_COLLECTION)
-    .find(query, { sort: { blockNumberL2: 1, useBigInt64: true } })
+    .find(query, { sort: { blockNumberL2: 1 } })
     .toArray();
 }
 
@@ -241,9 +241,7 @@ export async function setRegisteredProposerAddress(address, url) {
 export async function isRegisteredProposerAddressMine(address) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const proposer = await db
-    .collection(PROPOSER_COLLECTION)
-    .findOne({ _id: address }, { useBigInt64: true });
+  const proposer = await db.collection(PROPOSER_COLLECTION).findOne({ _id: address });
 
   logger.debug({ msg: 'Found registered proposer', proposer });
 
@@ -257,9 +255,7 @@ export async function deleteRegisteredProposerAddress(address) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { _id: address };
-  const foundProposer = !!(await db
-    .collection(PROPOSER_COLLECTION)
-    .findOne(query, { useBigInt64: true }));
+  const foundProposer = !!(await db.collection(PROPOSER_COLLECTION).findOne(query));
   if (foundProposer) {
     await db.collection(PROPOSER_COLLECTION).deleteOne(query);
 
@@ -366,7 +362,7 @@ export async function getMempoolTransactions() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { mempool: true }; // Transactions in the mempool
-  return db.collection(TRANSACTIONS_COLLECTION).find(query, { useBigInt64: true }).toArray();
+  return db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
 }
 
 /**
@@ -377,7 +373,7 @@ export async function getMempoolTransactionsSortedByFee() {
   const db = connection.db(OPTIMIST_DB);
   return db
     .collection(TRANSACTIONS_COLLECTION)
-    .find({ mempool: true }, { _id: 0 }, { useBigInt64: true })
+    .find({ mempool: true }, { _id: 0 })
     .sort({ fee: -1 })
     .toArray();
 }
@@ -390,7 +386,7 @@ async function getMempoolTransaction(query) {
   const db = connection.db(OPTIMIST_DB);
   // eslint-disable-next-line no-param-reassign
   query.mempool = true;
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query, { useBigInt64: true });
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 
 /**
@@ -427,7 +423,7 @@ export async function getTransactionByTransactionHash(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHash };
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query, { useBigInt64: true });
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 
 /**
@@ -437,10 +433,7 @@ export async function getTransactionsByTransactionHashes(transactionHashes) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHash: { $in: transactionHashes } };
-  const returnedTransactions = await db
-    .collection(TRANSACTIONS_COLLECTION)
-    .find(query, { useBigInt64: true })
-    .toArray();
+  const returnedTransactions = await db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
   // Create a dictionary where we will store the correct position ordering
   const positions = {};
   // Use the ordering of txHashes in the block to fill the dictionary-indexed by txHash
@@ -462,10 +455,7 @@ export async function getTransactionsByTransactionHashesByL2Block(transactionHas
     transactionHash: { $in: transactionHashes },
     blockNumberL2: { $eq: block.blockNumberL2 },
   };
-  const returnedTransactions = await db
-    .collection(TRANSACTIONS_COLLECTION)
-    .find(query, { useBigInt64: true })
-    .toArray();
+  const returnedTransactions = await db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
   // Create a dictionary where we will store the correct position ordering
   const positions = {};
   // Use the ordering of txHashes in the block to fill the dictionary-indexed by txHash
@@ -514,7 +504,7 @@ export async function getTransactionL2ByCommitment(commitmentHash, blockNumberL2
     commitments: { $in: [commitmentHash] },
     blockNumberL2: { $gt: -1, $ne: blockNumberL2OfTx },
   };
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query, { useBigInt64: true });
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 
 export async function getTransactionL2ByNullifier(nullifierHash, blockNumberL2OfTx) {
@@ -524,7 +514,7 @@ export async function getTransactionL2ByNullifier(nullifierHash, blockNumberL2Of
     nullifiers: { $in: [nullifierHash] },
     blockNumberL2: { $gt: -1, $ne: blockNumberL2OfTx },
   };
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query, { useBigInt64: true });
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 
 /**
@@ -575,7 +565,7 @@ export async function getLatestTree() {
   const db = connection.db(OPTIMIST_DB);
   const timberObjArr = await db
     .collection(TIMBER_COLLECTION)
-    .find({ useBigInt64: true })
+    .find()
     .sort({ blockNumberL2: -1 })
     .limit(1)
     .toArray();
@@ -597,8 +587,7 @@ export async function getTreeByBlockNumberL2(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const { root, frontier, leafCount } =
-    (await db.collection(TIMBER_COLLECTION).findOne({ blockNumberL2 }, { useBigInt64: true })) ??
-    {};
+    (await db.collection(TIMBER_COLLECTION).findOne({ blockNumberL2 })) ?? {};
   const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
   return t;
 }
@@ -607,9 +596,7 @@ export async function getTreeByLeafCount(historicalLeafCount) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const { root, frontier, leafCount } =
-    (await db
-      .collection(TIMBER_COLLECTION)
-      .findOne({ leafCount: historicalLeafCount }, { useBigInt64: true })) ?? {};
+    (await db.collection(TIMBER_COLLECTION).findOne({ leafCount: historicalLeafCount })) ?? {};
   const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
   return t;
 }
@@ -625,7 +612,7 @@ export async function deleteTreeByBlockNumberL2(blockNumberL2) {
 export async function getNumberOfL2Blocks() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  return db.collection(TIMBER_COLLECTION).find({ useBigInt64: true }).count();
+  return db.collection(TIMBER_COLLECTION).find().count();
 }
 
 // function to set the path of the transaction hash leaf in transaction hash timber
@@ -657,7 +644,6 @@ export async function getTransactionHashSiblingInfo(transactionHash) {
         transactionHashesRoot: 1,
         isOnChain: 1,
       },
-      useBigInt64: true,
     },
   );
 }

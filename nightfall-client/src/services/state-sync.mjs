@@ -60,7 +60,7 @@ export const syncState = async (
   }
 };
 
-const genGetCommitments = async (query = {}, proj = { useBigInt64: true }) => {
+const genGetCommitments = async (query = {}, proj = {}) => {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).find(query, proj).toArray();

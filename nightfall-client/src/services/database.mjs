@@ -41,7 +41,7 @@ export async function getLatestTree() {
   const db = connection.db(COMMITMENTS_DB);
   const timberObjArr = await db
     .collection(TIMBER_COLLECTION)
-    .find({ useBigInt64: true })
+    .find()
     .sort({ blockNumberL2: -1 })
     .limit(1)
     .toArray();
@@ -75,8 +75,7 @@ export async function getTreeByBlockNumberL2(blockNumberL2) {
   if (blockNumberL2 < 0) return new Timber(0, [], 0, undefined, HASH_TYPE, TIMBER_HEIGHT);
   try {
     const { root, frontier, leafCount } =
-      (await db.collection(TIMBER_COLLECTION).findOne({ blockNumberL2 }, { useBigInt64: true })) ??
-      {};
+      (await db.collection(TIMBER_COLLECTION).findOne({ blockNumberL2 })) ?? {};
     const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
     return t;
   } catch (error) {
@@ -100,7 +99,7 @@ export async function deleteTreeByTransactionHashL1(transactionHashL1) {
 export async function getNumberOfL2Blocks() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  return db.collection(TIMBER_COLLECTION).find({ useBigInt64: true }).count();
+  return db.collection(TIMBER_COLLECTION).find().count();
 }
 
 /**
@@ -132,7 +131,7 @@ export async function getBlockByBlockNumberL2(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { blockNumberL2: Number(blockNumberL2) };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query, { useBigInt64: true });
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
 }
 
 /**
@@ -155,7 +154,7 @@ export async function findBlocksFromBlockNumberL2(blockNumberL2) {
   const query = { blockNumberL2: { $gte: Number(blockNumberL2) } };
   return db
     .collection(SUBMITTED_BLOCKS_COLLECTION)
-    .find(query, { sort: { blockNumberL2: 1 }, useBigInt64: true })
+    .find(query, { sort: { blockNumberL2: 1 })
     .toArray();
 }
 
@@ -163,14 +162,14 @@ export async function getBlockByTransactionHash(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { transactionHashes: transactionHash };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query, { useBigInt64: true });
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
 }
 
 export async function getBlockByTransactionHashL1(transactionHashL1) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { transactionHashL1 };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query, { useBigInt64: true });
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
 }
 
 /**
@@ -229,7 +228,7 @@ to decrypt commitments when new ivk is received.
 export async function getAllTransactions() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  return db.collection(TRANSACTIONS_COLLECTION).find({ useBigInt64: true }).toArray();
+  return db.collection(TRANSACTIONS_COLLECTION).find().toArray();
 }
 
 /*
@@ -248,7 +247,7 @@ export async function getTransactionByTransactionHash(transactionHash) {
   const db = connection.db(COMMITMENTS_DB);
   // We should not delete from a spent mempool
   const query = { _id: transactionHash };
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query, { useBigInt64: true });
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 
 // function to set the path of the transaction hash leaf in transaction hash timber
@@ -280,7 +279,6 @@ export async function getTransactionHashSiblingInfo(transactionHash) {
         transactionHashesRoot: 1,
         isOnChain: 1,
       },
-      useBigInt64: true,
     },
   );
 }
@@ -295,10 +293,7 @@ export async function getTransactionsByTransactionHashesByL2Block(transactionHas
     transactionHash: { $in: transactionHashes },
     blockNumberL2: { $eq: block.blockNumberL2 },
   };
-  const returnedTransactions = await db
-    .collection(TRANSACTIONS_COLLECTION)
-    .find(query, { useBigInt64: true })
-    .toArray();
+  const returnedTransactions = await db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
   // Create a dictionary where we will store the correct position ordering
   const positions = {};
   // Use the ordering of txHashes in the block to fill the dictionary-indexed by txHash

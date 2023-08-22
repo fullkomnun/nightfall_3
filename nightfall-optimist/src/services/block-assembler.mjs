@@ -175,7 +175,6 @@ export async function conditionalMakeBlock(proposer) {
           blockSize,
         });
 
-        const stateContract = await waitForContract(STATE_CONTRACT_NAME);
         logger.debug(
           `Block.buildSolidityStruct(block) = ${JSON.stringify(
             Block.buildSolidityStruct(block),
@@ -193,7 +192,9 @@ export async function conditionalMakeBlock(proposer) {
           ),
         );
         // propose this block to the State contract here
-        const unsignedProposeBlockTransaction = await stateContract.methods
+        const unsignedProposeBlockTransaction = await (
+          await waitForContract(STATE_CONTRACT_NAME)
+        ).methods
           .proposeBlock(
             Block.buildSolidityStruct(block),
             transactions.map(t => Transaction.buildSolidityStruct(t)),

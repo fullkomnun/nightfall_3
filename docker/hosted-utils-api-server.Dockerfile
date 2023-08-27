@@ -7,11 +7,10 @@ RUN apt-get update \
 
 WORKDIR /app
 
-COPY hosted-utils-api-server/src src
-COPY hosted-utils-api-server/package.json hosted-utils-api-server/package-lock.json ./
-COPY hosted-utils-api-server/entrypoint.sh entrypoint.sh
-
-RUN npm ci
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit && npm cache clean --force
+COPY src src
+COPY entrypoint.sh ./
 
 EXPOSE 80 9229
 

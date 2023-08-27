@@ -17,6 +17,8 @@ permissions:
 jobs:
   dependency-review:
     runs-on: ubuntu-20.04
+    permissions:
+      contents: read
     steps:
       - name: 'Checkout Repository'
         uses: actions/checkout@v3
@@ -25,6 +27,8 @@ jobs:
 
   eslint-check:
     runs-on: ubuntu-20.04
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -40,6 +44,8 @@ jobs:
 
   general-tests:
     runs-on: ubuntu-20.04
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -55,6 +61,8 @@ jobs:
 
   unit-tests:
     runs-on: ubuntu-20.04
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -78,19 +86,22 @@ jobs:
 
   unit-test-circuits:
     runs-on: ubuntu-20.04
+    container:
+      image: ghcr.io/fullkomnun/local-circom:v2.1.2
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.github_token }}
+      options: --cpus 2
+    timeout-minutes: 30
     steps:
+      - name: Add 'CIRCOM_HOME' to PATH
+        shell: bash
+        run: |
+          echo "$CIRCOM_HOME" >> $GITHUB_PATH
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
-      - name: Install Circom
-        run: |
-          curl https://sh.rustup.rs -sSf -o rust.sh
-          bash -f rust.sh -y
-          git clone https://github.com/iden3/circom.git
-          cd circom
-          cargo build --release
-          cargo install --path circom
 
       - name: Unit Circuit Tests
         run: |

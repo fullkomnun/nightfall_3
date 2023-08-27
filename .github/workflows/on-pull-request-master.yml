@@ -10,6 +10,10 @@ env:
   WHITELISTING: disable
   SKIP_CIRCOM_BUILD: 1
 
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   dependency-review:
     runs-on: ubuntu-20.04
@@ -110,6 +114,13 @@ jobs:
         with:
           node-version: '16.17.0'
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
@@ -199,6 +210,13 @@ jobs:
         with:
           node-version: '16.17.0'
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
@@ -245,6 +263,13 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |
@@ -294,6 +319,13 @@ jobs:
         with:
           node-version: '16.17.0'
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
@@ -342,6 +374,13 @@ jobs:
         with:
           node-version: '16.17.0'
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
@@ -388,6 +427,13 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |
@@ -436,6 +482,13 @@ jobs:
         with:
           node-version: '16.17.0'
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
@@ -483,6 +536,13 @@ jobs:
         with:
           node-version: '16.17.0'
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
@@ -528,6 +588,13 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |
@@ -575,6 +642,13 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |
@@ -626,6 +700,13 @@ jobs:
       - name: Build adversary
         run: npm run build-adversary
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
@@ -676,6 +757,13 @@ jobs:
 
       - name: Build adversary
         run: npm run build-adversary
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |
@@ -745,7 +833,14 @@ jobs:
         with:
           node-version: '16.17.0'
 
-      - name: Start Containers with ganache
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Start Containers   with ganache
         run: |
           ./bin/setup-nightfall
           ./bin/start-nightfall -g -d &> test-gas.log &disown
@@ -792,7 +887,14 @@ jobs:
         with:
           node-version: '16.17.0'
 
-      - name: Start Containers with ganache
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Start Containers   with ganache
         run: |
           ./bin/setup-nightfall
           ./bin/start-nightfall -g -d &> test-apps.log &disown
@@ -859,6 +961,13 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |

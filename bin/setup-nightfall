@@ -17,8 +17,13 @@ if [ $OS_ARCH != "x86_64" ]; then
   NO_CACHE_FLAG='--no-cache'
 fi
 
+BUILDKIT=''
+if [[ -n "$DOCKER_BUILDKIT" ]]; then 
+  BUILDKIT=buildx
+fi
+
 if [ "$SKIP_CIRCOM_BUILD" == "" ]; then
-  docker build ${NO_CACHE_FLAG} -t ghcr.io/eyblockchain/local-circom -f docker/circom.Dockerfile .
+  docker $BUILDKIT build ${NO_CACHE_FLAG} -t ghcr.io/eyblockchain/local-circom -f docker/circom.Dockerfile .
 fi
 
 # containers built separately. A parallel build fails.

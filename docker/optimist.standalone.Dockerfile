@@ -1,4 +1,7 @@
-FROM node:16.17
+ARG NODE_VERSION
+ARG DEBIAN_RELEASE
+
+FROM node:${NODE_VERSION}-${DEBIAN_RELEASE}-slim
 
 # install node
 RUN apt-get update

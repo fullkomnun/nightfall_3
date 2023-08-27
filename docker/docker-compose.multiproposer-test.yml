@@ -4,9 +4,6 @@ services:
   # Temporary container to deploy contracts and circuits and populate volumes
   deployer:
     image: ghcr.io/eyblockchain/nightfall3-deployer:latest
-    build:
-      dockerfile: docker/deployer.Dockerfile
-      context: ..
     volumes:
       - type: volume
         source: build
@@ -57,9 +54,7 @@ services:
       GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
 
   hosted-utils-api-server:
-    build:
-      dockerfile: docker/hosted-utils-api-server.Dockerfile
-      context: ..
+    image: ghcr.io/eyblockchain/nightfall3-hosted-utils-api-server:latest
     depends_on:
       - worker
     ports:
@@ -71,9 +66,6 @@ services:
 
   worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
-    build:
-      dockerfile: docker/worker.Dockerfile
-      context: ..
     volumes:
       - type: volume
         source: proving_files
@@ -101,9 +93,7 @@ services:
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
 
   client_1:
-    build:
-      dockerfile: docker/client.Dockerfile
-      context: ..
+    image: ghcr.io/eyblockchain/nightfall3-client:latest
     container_name: client_1
     volumes:
       - type: volume
@@ -137,9 +127,7 @@ services:
     command: ['npm', 'run', 'dev']
 
   client_2:
-    build:
-      dockerfile: docker/client.Dockerfile
-      context: ..
+    image: ghcr.io/eyblockchain/nightfall3-client:latest
     container_name: client_2
     volumes:
       - type: volume
@@ -185,9 +173,7 @@ services:
     command: ['npm', 'run', 'dev']
 
   proposer_optimist_1:
-    build:
-      dockerfile: docker/optimist.Dockerfile
-      context: ..
+    image: ghcr.io/eyblockchain/nightfall3-optimist:latest
     container_name: proposer_optimist_1
     depends_on:
       - optimist_mongodb_1
@@ -219,9 +205,7 @@ services:
     command: ['npm', 'run', 'dev']
 
   proposer_optimist_2:
-    build:
-      dockerfile: docker/optimist.Dockerfile
-      context: ..
+    image: ghcr.io/eyblockchain/nightfall3-optimist:latest
     container_name: proposer_optimist_2
     depends_on:
       - optimist_mongodb_2
@@ -292,9 +276,7 @@ services:
         target: /data/db
 
   proposer_1:
-    build:
-      dockerfile: docker/proposer.Dockerfile
-      context: ..
+    image: ghcr.io/eyblockchain/nightfall3-proposer:latest
     container_name: proposer_1
     depends_on:
       - proposer_optimist_1
@@ -324,9 +306,7 @@ services:
         target: /app/cli
 
   proposer_2:
-    build:
-      dockerfile: docker/proposer.Dockerfile
-      context: ..
+    image: ghcr.io/eyblockchain/nightfall3-proposer:latest
     container_name: proposer_2
     depends_on:
       - proposer_optimist_2
@@ -356,9 +336,7 @@ services:
         target: /app/cli
 
   challenger_1:
-    build:
-      dockerfile: docker/challenger.Dockerfile
-      context: ..
+    image: ghcr.io/eyblockchain/nightfall3-challenger:latest
     container_name: challenger_1
     depends_on:
       - proposer_optimist_1

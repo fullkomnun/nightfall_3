@@ -39,7 +39,7 @@ services:
     environment:
       AUTHENTICATION_KEY: ${AUTHENTICATION_KEY}
       AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-600}
-      BLOCKCHAIN_URL: ${BLOCKCHAIN_URL} 
+      BLOCKCHAIN_URL: ${BLOCKCHAIN_URL}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
       CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST:-worker}
@@ -104,12 +104,9 @@ services:
       USDC_RESTRICT: ${USDC_RESTRICT}
       UPGRADE: ${UPGRADE_CONTRACTS}
       WHITELISTING: ${WHITELISTING}
-      WETH_RESTRICT: ${WETH_RESTRICT} 
+      WETH_RESTRICT: ${WETH_RESTRICT}
 
   hosted-utils-api-server:
-    build:
-      dockerfile: docker/hosted-utils-api-server.Dockerfile
-      context: ..
     image: ghcr.io/eyblockchain/nightfall3-hosted-utils-api-server:latest
     depends_on:
       worker:

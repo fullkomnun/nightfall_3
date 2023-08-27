@@ -3,9 +3,6 @@ services:
   # the services 'administrator', 'client' & 'worker' are added here for sharing the filesystem volume.
   administrator:
     image: ghcr.io/eyblockchain/nightfall3-administrator:latest
-    build:
-      dockerfile: docker/admin.Dockerfile
-      context: ..
     networks:
       - nightfall_network
     depends_on:
@@ -21,9 +18,6 @@ services:
 
   client:
     image: ghcr.io/eyblockchain/nightfall3-client:latest
-    build:
-      dockerfile: docker/client.Dockerfile
-      context: ..
     volumes:
       - ./volumes/build:/app/build/
     networks:
@@ -35,7 +29,7 @@ services:
       - rabbitmq
       - mongodb
     environment:
-      AUTHENTICATION_KEY: ${AUTHENTICATION_KEY}    
+      AUTHENTICATION_KEY: ${AUTHENTICATION_KEY}
       AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-600}
       BLOCKCHAIN_URL: ${BLOCKCHAIN_URL:?BLOCKCHAIN_URL-cannot-be-blank}
       CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST:-worker}
@@ -60,9 +54,6 @@ services:
 
   deployer:
     image: ghcr.io/eyblockchain/nightfall3-deployer:latest
-    build:
-      dockerfile: docker/deployer.Dockerfile
-      context: ..
     depends_on:
       - worker
     networks:
@@ -93,7 +84,7 @@ services:
       UPGRADE: ${UPGRADE_CONTRACTS}
       USDC_RESTRICT: ${USDC_RESTRICT}
       WHITELISTING: ${WHITELISTING?WHITELISTING-not-set}
-      
+
   mongodb:
     image: mongo:4.4.1-bionic
     hostname: mongodb
@@ -117,9 +108,6 @@ services:
 
   optimist:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
-    build:
-      dockerfile: docker/optimist.Dockerfile
-      context: ..
     depends_on:
       - mongodb
     networks:
@@ -147,9 +135,6 @@ services:
 
   worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
-    build:
-      dockerfile: docker/worker.Dockerfile
-      context: ..
     volumes:
       - ./volumes/proving_files:/app/output/
     depends_on:

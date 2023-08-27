@@ -8,10 +8,17 @@ env:
   DOCKER_BUILDKIT: 1 # enable docker buildkit
   # Whitelisting is disabled during testing for backwards compatibility with these tests.  It must not be disabled in production.
   WHITELISTING: disable
+  SKIP_CIRCOM_BUILD: 1
+
+permissions:
+  contents: read
+  packages: read
 
 jobs:
   dependency-review:
     runs-on: ubuntu-20.04
+    permissions:
+      contents: read
     steps:
       - name: 'Checkout Repository'
         uses: actions/checkout@v3
@@ -20,6 +27,8 @@ jobs:
 
   eslint-check:
     runs-on: ubuntu-20.04
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -35,6 +44,8 @@ jobs:
 
   general-tests:
     runs-on: ubuntu-20.04
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -50,6 +61,8 @@ jobs:
 
   unit-tests:
     runs-on: ubuntu-20.04
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -73,19 +86,22 @@ jobs:
 
   unit-test-circuits:
     runs-on: ubuntu-20.04
+    container:
+      image: ghcr.io/fullkomnun/local-circom:v2.1.2
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.github_token }}
+      options: --cpus 2
+    timeout-minutes: 30
     steps:
+      - name: Add 'CIRCOM_HOME' to PATH
+        shell: bash
+        run: |
+          echo "$CIRCOM_HOME" >> $GITHUB_PATH
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
-      - name: Install Circom
-        run: |
-          curl https://sh.rustup.rs -sSf -o rust.sh
-          bash -f rust.sh -y
-          git clone https://github.com/iden3/circom.git
-          cd circom
-          cargo build --release
-          cargo install --path circom
 
       - name: Unit Circuit Tests
         run: |
@@ -108,6 +124,13 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |
@@ -198,6 +221,13 @@ jobs:
         with:
           node-version: '16.17.0'
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
@@ -244,6 +274,13 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |
@@ -293,6 +330,13 @@ jobs:
         with:
           node-version: '16.17.0'
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
@@ -341,6 +385,13 @@ jobs:
         with:
           node-version: '16.17.0'
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
@@ -387,6 +438,13 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |
@@ -435,6 +493,13 @@ jobs:
         with:
           node-version: '16.17.0'
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
@@ -482,6 +547,13 @@ jobs:
         with:
           node-version: '16.17.0'
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
@@ -527,6 +599,13 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |
@@ -574,6 +653,13 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |
@@ -625,6 +711,13 @@ jobs:
       - name: Build adversary
         run: npm run build-adversary
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
@@ -675,6 +768,13 @@ jobs:
 
       - name: Build adversary
         run: npm run build-adversary
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |
@@ -744,7 +844,14 @@ jobs:
         with:
           node-version: '16.17.0'
 
-      - name: Start Containers with ganache
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Start Containers   with ganache
         run: |
           ./bin/setup-nightfall
           ./bin/start-nightfall -g -d &> test-gas.log &disown
@@ -791,7 +898,14 @@ jobs:
         with:
           node-version: '16.17.0'
 
-      - name: Start Containers with ganache
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Start Containers   with ganache
         run: |
           ./bin/setup-nightfall
           ./bin/start-nightfall -g -d &> test-apps.log &disown
@@ -820,7 +934,7 @@ jobs:
             curl -i http://localhost:8092/healthcheck
           attempt_limit: 10
           attempt_delay: 30000
-      
+
       - name: 'Check challenger liveliness'
         uses: Wandalen/wretry.action@v1.0.36
         with:
@@ -848,7 +962,6 @@ jobs:
             ./test-apps.log
             ./test-proposer.log
 
-
   periodic-payment-test:
     env:
       CONFIRMATIONS: 1
@@ -859,6 +972,13 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Containers
         run: |

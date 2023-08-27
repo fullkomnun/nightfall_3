@@ -36,7 +36,7 @@ if [ -z "${NO_SERVICES_SETUP}" ]; then
 
   echo -e "Building the contaners's images: ${DEPLOYMENT_SERVICES}\n"
 
-  docker build ${NO_CACHE_FLAG} -t ghcr.io/eyblockchain/local-circom -f docker/circom.Dockerfile .
+  docker build ${NO_CACHE_FLAG} -t ghcr.io/fullkomnun/local-circom -f docker/circom.Dockerfile .
 
   if [[ "${DEPLOYMENT_SERVICES}" == *"deployer"* ]]; then
     docker-compose -f docker/docker-compose.deployment.yml --env-file $DEPLOYMENT_ENV_FILE build ${NO_CACHE_FLAG} deployer

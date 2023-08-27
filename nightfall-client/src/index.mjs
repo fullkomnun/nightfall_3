@@ -8,6 +8,7 @@ import rabbitmq from './utils/rabbitmq.mjs';
 import queues from './queues/index.mjs';
 import { initialClientSync } from './services/state-sync.mjs';
 import { startEventQueue, eventHandlers } from './event-handlers/index.mjs';
+import os from "os";
 
 const main = async () => {
   // we want to have endpoints responding as soon as possible, but prevent
@@ -38,3 +39,11 @@ const main = async () => {
 };
 
 main();
+
+let concurrency;
+if ((typeof(navigator) === "object") && navigator.hardwareConcurrency) {
+    concurrency = navigator.hardwareConcurrency;
+} else {
+    concurrency = os.cpus().length;
+}
+console.log(`concurrency in container is ${concurrency}`);

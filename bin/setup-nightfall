@@ -23,7 +23,7 @@ if [[ -n "$DOCKER_BUILDKIT" ]]; then
 fi
 
 if [ "$SKIP_CIRCOM_BUILD" == "" ]; then
-  docker $BUILDKIT build ${NO_CACHE_FLAG} -t ghcr.io/eyblockchain/local-circom -f docker/circom.Dockerfile .
+  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/local-circom - < docker/circom.Dockerfile
 fi
 
 # containers built separately. A parallel build fails.

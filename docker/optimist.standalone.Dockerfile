@@ -1,4 +1,9 @@
-FROM node:16.17
+# syntax=docker/dockerfile:1.2
+
+ARG NODE_VERSION
+ARG DEBIAN_RELEASE
+
+FROM node:${NODE_VERSION}-${DEBIAN_RELEASE}-slim as builder
 
 # install node
 RUN apt-get update

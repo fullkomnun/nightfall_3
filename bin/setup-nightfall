@@ -2,6 +2,15 @@
 
 set -e
 
+DEBIAN_RELEASE=bullseye
+
+# full directory name of the script no matter where it is being called from
+SCRIPT_DIR=$(dirname $(realpath $0))
+
+# extract node version from '.nvmrc'
+NODE_FULL_VERSION=$(cat "${script_dir}"/../.nvmrc | sed -e 's/^v//')
+NODE_VERSION=$(echo "$NODE_FULL_VERSION" | awk -F. '{print $1"."$2}')
+
 if [ "$SKIP_NPM_CI" == "" ]; then
   # Install node dependencies
   npm ci
@@ -30,33 +39,33 @@ fi
 # containers built separately. A parallel build fails.
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"administrator"* ]]; then
-  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/nightfall3-administrator -f docker/admin.Dockerfile .
+  docker $BUILDKIT build $NO_CACHE_FLAG --build-arg NODE_VERSION="${NODE_VERSION}" --build-arg DEBIAN_RELEASE="${DEBIAN_RELEASE}" -t ghcr.io/eyblockchain/nightfall3-administrator -f docker/admin.Dockerfile .
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"challenger"* ]]; then
-  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/nightfall3-challenger -f docker/challenger.Dockerfile .
+  docker $BUILDKIT build $NO_CACHE_FLAG --build-arg NODE_VERSION="${NODE_VERSION}" --build-arg DEBIAN_RELEASE="${DEBIAN_RELEASE}" -t ghcr.io/eyblockchain/nightfall3-challenger -f docker/challenger.Dockerfile .
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"client"* || "${NF_SERVICES_TO_START}" == *"adversary"* ]]; then
-  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/nightfall3-client -f docker/client.Dockerfile .
+  docker $BUILDKIT build $NO_CACHE_FLAG --build-arg NODE_VERSION="${NODE_VERSION}" --build-arg DEBIAN_RELEASE="${DEBIAN_RELEASE}" -t ghcr.io/eyblockchain/nightfall3-client -f docker/client.Dockerfile .
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"deployer"* ]]; then
-  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/nightfall3-deployer -f docker/deployer.Dockerfile .
+  docker $BUILDKIT build $NO_CACHE_FLAG --build-arg NODE_VERSION="${NODE_VERSION}" --build-arg DEBIAN_RELEASE="${DEBIAN_RELEASE}" -t ghcr.io/eyblockchain/nightfall3-deployer -f docker/deployer.Dockerfile .
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"hosted-utils-api-server"* ]]; then
-  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/nightfall3-hosted-utils-api-server -f docker/hosted-utils-api-server.Dockerfile ./hosted-utils-api-server
+  docker $BUILDKIT build $NO_CACHE_FLAG --build-arg NODE_VERSION="${NODE_VERSION}" --build-arg DEBIAN_RELEASE="${DEBIAN_RELEASE}" -t ghcr.io/eyblockchain/nightfall3-hosted-utils-api-server -f docker/hosted-utils-api-server.Dockerfile ./hosted-utils-api-server
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"optimist"* || "${NF_SERVICES_TO_START}" == *"adversary"* ]]; then
-  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/nightfall3-optimist -f docker/optimist.Dockerfile .
+  docker $BUILDKIT build $NO_CACHE_FLAG --build-arg NODE_VERSION="${NODE_VERSION}" --build-arg DEBIAN_RELEASE="${DEBIAN_RELEASE}" -t ghcr.io/eyblockchain/nightfall3-optimist -f docker/optimist.Dockerfile .
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"proposer"* ]]; then
-  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/nightfall3-proposer -f docker/proposer.Dockerfile .
+  docker $BUILDKIT build $NO_CACHE_FLAG --build-arg NODE_VERSION="${NODE_VERSION}" --build-arg DEBIAN_RELEASE="${DEBIAN_RELEASE}" -t ghcr.io/eyblockchain/nightfall3-proposer -f docker/proposer.Dockerfile .
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"worker"* ]]; then
-  docker $BUILDKIT build $NO_CACHE_FLAG -t ghcr.io/eyblockchain/nightfall3-worker -f docker/worker.Dockerfile .
+  docker $BUILDKIT build $NO_CACHE_FLAG --build-arg NODE_VERSION="${NODE_VERSION}" --build-arg DEBIAN_RELEASE="${DEBIAN_RELEASE}" -t ghcr.io/eyblockchain/nightfall3-worker -f docker/worker.Dockerfile .
 fi

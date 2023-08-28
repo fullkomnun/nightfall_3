@@ -51,7 +51,7 @@ describe('General Circuit Test', () => {
     erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
 
     stateAddress = await nf3Users[0].stateContractAddress;
-    web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+    await web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
   });
 
   it('Test that all circuits are working without fees', async () => {

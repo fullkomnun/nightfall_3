@@ -1,6 +1,6 @@
 /* ignore unused exports */
 
-import Web3 from 'web3';
+import { Web3 } from 'web3';
 
 const { ethereum } = global;
 

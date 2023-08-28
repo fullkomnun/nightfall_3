@@ -1,6 +1,6 @@
 /* eslint import/no-extraneous-dependencies: "off" */
 
-import Web3 from 'web3';
+import { Web3 } from 'web3';
 import config from 'config';
 import logger from './logger.mjs';
 
@@ -51,13 +51,13 @@ export default {
     return false;
   },
   disconnect() {
-    this.web3.currentProvider.connection.close();
+    this.web3.currentProvider?.disconnect();
   },
 
   async estimateGas(tx) {
     let gas;
     try {
-      gas = await this.web3.eth.estimateGas(tx);
+      gas = Number(await this.web3.eth.estimateGas(tx));
       logger.debug(`Gas estimated at ${gas}`);
     } catch (error) {
       gas = config.WEB3_OPTIONS.gas;
@@ -74,7 +74,7 @@ export default {
     if (!config.WEB3_OPTIONS.from) throw Error('config WEB3_OPTIONS.from is not set');
     if (!config.ETH_PRIVATE_KEY) throw Error('config ETH_PRIVATE_KEY not set');
 
-    const fromAddress = await this.web3.eth.accounts.privateKeyToAccount(config.ETH_PRIVATE_KEY);
+    const fromAddress = this.web3.eth.accounts.privateKeyToAccount(config.ETH_PRIVATE_KEY);
 
     const tx = {
       from: fromAddress.address,

@@ -1,7 +1,7 @@
 /* eslint-disable no-empty-function */
 import { expect } from 'chai';
 import hardhat from 'hardhat';
-import { time } from '@nomicfoundation/hardhat-network-helpers';
+import { time } from '@nomicfoundation/hardhat-toolbox/network-helpers.js';
 import { packBlockInfo, unpackBlockInfo } from 'common-files/utils/block-utils.mjs';
 import { packHistoricRoots, packTransactionInfo } from 'common-files/classes/transaction.mjs';
 import {
@@ -57,83 +57,92 @@ describe('Testing Shield Contract', function () {
   beforeEach(async () => {
     const ERC20MockDeployer = await ethers.getContractFactory('ERC20Mock');
     Erc20MockInstance = await ERC20MockDeployer.deploy(100000000);
-    const erc20MockInstance = await Erc20MockInstance.deployed();
-    erc20MockAddress = erc20MockInstance.address;
+    const erc20MockInstance = await Erc20MockInstance.waitForDeployment();
+    erc20MockAddress = await erc20MockInstance.getAddress();
 
     const ERC721MockDeployer = await ethers.getContractFactory('ERC721Mock');
     Erc721MockInstance = await ERC721MockDeployer.deploy();
-    const erc721MockInstance = await Erc721MockInstance.deployed();
-    erc721MockAddress = erc721MockInstance.address;
+    const erc721MockInstance = await Erc721MockInstance.waitForDeployment();
+    erc721MockAddress = await erc721MockInstance.getAddress();
 
     const ERC1155MockDeployer = await ethers.getContractFactory('ERC1155Mock');
     Erc1155MockInstance = await ERC1155MockDeployer.deploy();
-    const erc1155MockInstance = await Erc1155MockInstance.deployed();
-    erc1155MockAddress = erc1155MockInstance.address;
+    const erc1155MockInstance = await Erc1155MockInstance.waitForDeployment();
+    erc1155MockAddress = await erc1155MockInstance.getAddress();
 
     const X509Deployer = await ethers.getContractFactory('X509');
     X509Instance = await upgrades.deployProxy(X509Deployer);
     await X509Instance.enableWhitelisting(false);
-    x509Address = X509Instance.address;
+    x509Address = await X509Instance.getAddress();
 
     const SanctionsListMockDeployer = await ethers.getContractFactory('SanctionsListMock');
     const sanctionsListMockInstance = await SanctionsListMockDeployer.deploy(
       sanctionedSigner.address,
     );
-    const sanctionsListAddress = sanctionsListMockInstance.address;
+    const sanctionsListAddress = await sanctionsListMockInstance.getAddress();
 
     const ShieldDeployer = await ethers.getContractFactory('Shield');
     ShieldInstance = await upgrades.deployProxy(ShieldDeployer, [], {
       initializer: 'initializeState',
     });
-    shieldAddress = (await ShieldInstance.deployed()).address;
+    await ShieldInstance.waitForDeployment();
+    shieldAddress = await ShieldInstance.getAddress();
 
     const PoseidonDeployer = await ethers.getContractFactory('Poseidon');
     const PoseidonInstance = await PoseidonDeployer.deploy();
+    await PoseidonInstance.waitForDeployment();
 
     const MerkleTreeStatelessDeployer = await ethers.getContractFactory('MerkleTree_Stateless', {
       libraries: {
-        Poseidon: (await PoseidonInstance.deployed()).address,
+        Poseidon: await PoseidonInstance.getAddress(),
       },
     });
     const MerkleTreeStatelessInstance = await MerkleTreeStatelessDeployer.deploy();
+    await MerkleTreeStatelessInstance.waitForDeployment();
 
     const ChallengesUtilDeployer = await ethers.getContractFactory('ChallengesUtil', {
       libraries: {
-        MerkleTree_Stateless: (await MerkleTreeStatelessInstance.deployed()).address,
+        MerkleTree_Stateless: await MerkleTreeStatelessInstance.getAddress(),
       },
     });
     const ChallengesUtilInstance = await ChallengesUtilDeployer.deploy();
+    await ChallengesUtilInstance.waitForDeployment();
 
     const VerifierDeployer = await ethers.getContractFactory('Verifier');
     const VerifierInstance = await VerifierDeployer.deploy();
+    await VerifierInstance.waitForDeployment();
 
     const Utils = await ethers.getContractFactory('Utils');
     const utils = await Utils.deploy();
+    await utils.waitForDeployment();
 
     const ChallengesDeployed = await ethers.getContractFactory('Challenges', {
       libraries: {
-        ChallengesUtil: (await ChallengesUtilInstance.deployed()).address,
-        Verifier: (await VerifierInstance.deployed()).address,
-        Utils: (await utils.deployed()).address,
+        ChallengesUtil: await ChallengesUtilInstance.getAddress(),
+        Verifier: await VerifierInstance.getAddress(),
+        Utils: await utils.getAddress(),
       },
     });
     const ChallengesInstance = await upgrades.deployProxy(ChallengesDeployed, {
       unsafeAllow: ['external-library-linking'],
     });
-    challengesAddress = (await ChallengesInstance.deployed()).address;
+    await ChallengesInstance.waitForDeployment();
+    challengesAddress = await ChallengesInstance.getAddress();
 
     const ProposerDeployer = await ethers.getContractFactory('Proposers');
     const ProposerInstance = await upgrades.deployProxy(ProposerDeployer, {
       unsafeAllow: ['external-library-linking'],
     });
-    proposerAddress = (await ProposerInstance.deployed()).address;
+    await ProposerInstance.waitForDeployment();
+    proposerAddress = await ProposerInstance.getAddress();
 
     const UtilsDeployer = await ethers.getContractFactory('Utils');
     const UtilsInstance = await UtilsDeployer.deploy();
+    await UtilsInstance.waitForDeployment();
 
     const StateDeployer = await ethers.getContractFactory('State', {
       libraries: {
-        Utils: (await UtilsInstance.deployed()).address,
+        Utils: await UtilsInstance.getAddress(),
       },
     });
     StateInstance = await upgrades.deployProxy(
@@ -144,7 +153,8 @@ describe('Testing Shield Contract', function () {
         initializer: 'initializeState',
       },
     );
-    stateAddress = (await StateInstance.deployed()).address;
+    await StateInstance.waitForDeployment();
+    stateAddress = await StateInstance.getAddress();
 
     ShieldInstance.setStateContract(stateAddress);
     ShieldInstance.setAuthorities(sanctionsListAddress, x509Address);
@@ -222,7 +232,7 @@ describe('Testing Shield Contract', function () {
         packedInfo,
         historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x4000000000000000000000000000000000000000000000000000000000000002',
-        ercAddress: ethers.utils.hexZeroPad(erc721MockAddress, 32),
+        ercAddress: ethers.zeroPadValue(erc721MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
         commitments: [
           '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
@@ -281,7 +291,7 @@ describe('Testing Shield Contract', function () {
         packedInfo,
         historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ercAddress: ethers.utils.hexZeroPad(erc1155MockAddress, 32),
+        ercAddress: ethers.zeroPadValue(erc1155MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
         commitments: [
           '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
@@ -355,8 +365,8 @@ describe('Testing Shield Contract', function () {
         packedInfo,
         historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ercAddress: ethers.utils.hexZeroPad(
-          ethers.utils.hexlify(1461501637330902918203684832716283019655932542976n),
+        ercAddress: ethers.zeroPadValue(
+          ethers.toBeHex(1461501637330902918203684832716283019655932542976n),
           32,
         ),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -404,7 +414,7 @@ describe('Testing Shield Contract', function () {
         packedInfo,
         historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000001',
-        ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
+        ercAddress: ethers.zeroPadValue(erc20MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
         commitments: [
           '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
@@ -468,7 +478,7 @@ describe('Testing Shield Contract', function () {
         packedInfo,
         historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
+        ercAddress: ethers.zeroPadValue(erc20MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
         commitments: [
           '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
@@ -509,7 +519,7 @@ describe('Testing Shield Contract', function () {
           '0x0000000000000000000000000000000000000000000000000000000000000000',
         ],
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
+        ercAddress: ethers.zeroPadValue(erc20MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
         commitments: [
           '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
@@ -552,7 +562,7 @@ describe('Testing Shield Contract', function () {
         packedInfo,
         historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
+        ercAddress: ethers.zeroPadValue(erc20MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
         commitments: [
           '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
@@ -598,7 +608,7 @@ describe('Testing Shield Contract', function () {
         packedInfo,
         historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
+        ercAddress: ethers.zeroPadValue(erc20MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
         commitments: [
           '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
@@ -655,8 +665,8 @@ describe('Testing Shield Contract', function () {
       const { proposer, blockNumberL2 } = unpackBlockInfo(block.packedInfo);
 
       expect((await StateInstance.blockInfo(blockHash)).stakeClaimed).to.equal(true);
-      const proposerBlockHash = ethers.utils.keccak256(
-        ethers.utils.solidityPack(['address', 'uint256'], [proposer, blockNumberL2]),
+      const proposerBlockHash = ethers.keccak256(
+        ethers.solidityPacked(['address', 'uint256'], [proposer, blockNumberL2]),
       );
 
       expect((await StateInstance.blockInfo(proposerBlockHash)).feesL2).to.equal(0);
@@ -678,7 +688,7 @@ describe('Testing Shield Contract', function () {
         root: '0x2dffeee2af2f5be8b946c00d2a0f96dc59ac65d1decce3bae9c2c70d5efca4a0',
         previousBlockHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
         frontierHash: '0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188',
-        transactionHashesRoot: ethers.utils.solidityKeccak256(
+        transactionHashesRoot: ethers.solidityPackedKeccak256(
           ['uint256', 'uint256'],
           [
             calculateTransactionHash(withdrawTransaction),
@@ -903,8 +913,8 @@ describe('Testing Shield Contract', function () {
         packedInfo,
         historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x4000000000000000000000000000000000000000000000000000000000000002',
-        ercAddress: ethers.utils.hexZeroPad(erc721MockAddress, 32),
-        recipientAddress: ethers.utils.hexZeroPad(owner[0].address, 32),
+        ercAddress: ethers.zeroPadValue(erc721MockAddress, 32),
+        recipientAddress: ethers.zeroPadValue(owner[0].address, 32),
         commitments: [
           '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
           '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -928,9 +938,9 @@ describe('Testing Shield Contract', function () {
         ],
       };
 
-      const transactionHashesRoot = ethers.utils.solidityKeccak256(
+      const transactionHashesRoot = ethers.solidityPackedKeccak256(
         ['uint256', 'uint256'],
-        [calculateTransactionHash(withdrawERC721), ethers.utils.hexZeroPad(0, 32)],
+        [calculateTransactionHash(withdrawERC721), ethers.zeroPadValue(ethers.toBeHex(0), 32)],
       );
 
       const packedInfoBlock = packBlockInfo(1, owner[0].address, 0);
@@ -953,7 +963,10 @@ describe('Testing Shield Contract', function () {
 
       await time.increase(86400 * 7 + 1);
 
-      const siblingPath = [blockERC721.transactionHashesRoot, ethers.utils.hexZeroPad(0, 32)];
+      const siblingPath = [
+        blockERC721.transactionHashesRoot,
+        ethers.zeroPadValue(ethers.toBeHex(0), 32),
+      ];
       const index = 0;
 
       await ShieldInstance.finaliseWithdrawal(blockERC721, withdrawERC721, index, siblingPath);
@@ -977,7 +990,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('succeeds to finalise withdrawal for an ERC1155 token', async function () {
-      await Erc1155MockInstance.safeTransferFrom(owner[0].address, shieldAddress, 1, 25, []);
+      await Erc1155MockInstance.safeTransferFrom(owner[0].address, shieldAddress, 1, 25, '0x');
       const packedInfo = packTransactionInfo(25, 0, 2, 2);
 
       const historicRootBlockNumberL2 = [
@@ -993,8 +1006,8 @@ describe('Testing Shield Contract', function () {
         packedInfo,
         historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000001',
-        ercAddress: ethers.utils.hexZeroPad(erc1155MockAddress, 32),
-        recipientAddress: ethers.utils.hexZeroPad(owner[0].address, 32),
+        ercAddress: ethers.zeroPadValue(erc1155MockAddress, 32),
+        recipientAddress: ethers.zeroPadValue(owner[0].address, 32),
         commitments: [
           '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
           '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -1018,9 +1031,9 @@ describe('Testing Shield Contract', function () {
         ],
       };
 
-      const transactionHashesRoot = ethers.utils.solidityKeccak256(
+      const transactionHashesRoot = ethers.solidityPackedKeccak256(
         ['uint256', 'uint256'],
-        [calculateTransactionHash(withdrawERC1155), ethers.utils.hexZeroPad(0, 32)],
+        [calculateTransactionHash(withdrawERC1155), ethers.zeroPadValue(ethers.toBeHex(0), 32)],
       );
 
       const packedInfoBlock = packBlockInfo(1, owner[0].address, 0);
@@ -1043,7 +1056,10 @@ describe('Testing Shield Contract', function () {
 
       await time.increase(86400 * 7 + 1);
 
-      const siblingPath = [blockERC1155.transactionHashesRoot, ethers.utils.hexZeroPad(0, 32)];
+      const siblingPath = [
+        blockERC1155.transactionHashesRoot,
+        ethers.zeroPadValue(ethers.toBeHex(0), 32),
+      ];
       const index = 0;
 
       await ShieldInstance.finaliseWithdrawal(blockERC1155, withdrawERC1155, index, siblingPath);
@@ -1119,10 +1135,7 @@ describe('Testing Shield Contract', function () {
         packedInfo,
         historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ercAddress: ethers.utils.concat([
-          ethers.utils.hexlify(1),
-          ethers.utils.hexZeroPad(erc20MockAddress, 31),
-        ]),
+        ercAddress: ethers.concat([ethers.toBeHex(1), ethers.zeroPadValue(erc20MockAddress, 31)]),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
         commitments: [
           '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
@@ -1147,9 +1160,12 @@ describe('Testing Shield Contract', function () {
         ],
       };
 
-      const transactionHashesRoot = ethers.utils.solidityKeccak256(
+      const transactionHashesRoot = ethers.solidityPackedKeccak256(
         ['uint256', 'uint256'],
-        [calculateTransactionHash(withdrawalTransactionInvalid), ethers.utils.hexZeroPad(0, 32)],
+        [
+          calculateTransactionHash(withdrawalTransactionInvalid),
+          ethers.zeroPadValue(ethers.toBeHex(0), 32),
+        ],
       );
 
       const packedInfoBlock = packBlockInfo(1, owner[0].address, 0);
@@ -1173,7 +1189,7 @@ describe('Testing Shield Contract', function () {
       await time.increase(86400 * 7 + 1);
 
       const index = 0;
-      const siblingPath = [transactionHashesRoot, ethers.utils.hexZeroPad(0, 32)];
+      const siblingPath = [transactionHashesRoot, ethers.zeroPadValue(ethers.toBeHex(0), 32)];
       await expect(
         ShieldInstance.finaliseWithdrawal(
           blockWithdrawalInvalid,
@@ -1226,7 +1242,7 @@ describe('Testing Shield Contract', function () {
         packedInfo,
         historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000001',
-        ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
+        ercAddress: ethers.zeroPadValue(erc20MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
         commitments: [
           '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
@@ -1251,9 +1267,12 @@ describe('Testing Shield Contract', function () {
         ],
       };
 
-      const transactionHashesRoot = ethers.utils.solidityKeccak256(
+      const transactionHashesRoot = ethers.solidityPackedKeccak256(
         ['uint256', 'uint256'],
-        [calculateTransactionHash(withdrawalTransactionInvalid), ethers.utils.hexZeroPad(0, 32)],
+        [
+          calculateTransactionHash(withdrawalTransactionInvalid),
+          ethers.zeroPadValue(ethers.toBeHex(0), 32),
+        ],
       );
 
       const packedInfoBlock = packBlockInfo(1, owner[0].address, 0);
@@ -1277,7 +1296,7 @@ describe('Testing Shield Contract', function () {
       await time.increase(86400 * 7 + 1);
 
       const index = 0;
-      const siblingPath = [transactionHashesRoot, ethers.utils.hexZeroPad(0, 32)];
+      const siblingPath = [transactionHashesRoot, ethers.zeroPadValue(ethers.toBeHex(0), 32)];
       await expect(
         ShieldInstance.finaliseWithdrawal(
           blockWithdrawalInvalid,
@@ -1305,7 +1324,7 @@ describe('Testing Shield Contract', function () {
         packedInfo,
         historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
+        ercAddress: ethers.zeroPadValue(erc20MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
         commitments: [
           '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
@@ -1330,9 +1349,12 @@ describe('Testing Shield Contract', function () {
         ],
       };
 
-      const transactionHashesRoot = ethers.utils.solidityKeccak256(
+      const transactionHashesRoot = ethers.solidityPackedKeccak256(
         ['uint256', 'uint256'],
-        [calculateTransactionHash(withdrawalTransactionInvalid), ethers.utils.hexZeroPad(0, 32)],
+        [
+          calculateTransactionHash(withdrawalTransactionInvalid),
+          ethers.zeroPadValue(ethers.toBeHex(0), 32),
+        ],
       );
 
       const packedInfoBlock = packBlockInfo(1, owner[0].address, 0);
@@ -1356,7 +1378,7 @@ describe('Testing Shield Contract', function () {
       await time.increase(86400 * 7 + 1);
 
       const index = 0;
-      const siblingPath = [transactionHashesRoot, ethers.utils.hexZeroPad(0, 32)];
+      const siblingPath = [transactionHashesRoot, ethers.zeroPadValue(ethers.toBeHex(0), 32)];
       await expect(
         ShieldInstance.finaliseWithdrawal(
           blockWithdrawalInvalid,
@@ -1383,7 +1405,7 @@ describe('Testing Shield Contract', function () {
         packedInfo,
         historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000001',
-        ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
+        ercAddress: ethers.zeroPadValue(erc20MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
         commitments: [
           '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
@@ -1408,9 +1430,12 @@ describe('Testing Shield Contract', function () {
         ],
       };
 
-      const transactionHashesRoot = ethers.utils.solidityKeccak256(
+      const transactionHashesRoot = ethers.solidityPackedKeccak256(
         ['uint256', 'uint256'],
-        [calculateTransactionHash(withdrawalTransactionInvalid), ethers.utils.hexZeroPad(0, 32)],
+        [
+          calculateTransactionHash(withdrawalTransactionInvalid),
+          ethers.zeroPadValue(ethers.toBeHex(0), 32),
+        ],
       );
 
       const packedInfoBlock = packBlockInfo(1, owner[0].address, 0);
@@ -1433,7 +1458,7 @@ describe('Testing Shield Contract', function () {
       await time.increase(86400 * 7 + 1);
 
       const index = 0;
-      const siblingPath = [transactionHashesRoot, ethers.utils.hexZeroPad(0, 32)];
+      const siblingPath = [transactionHashesRoot, ethers.zeroPadValue(ethers.toBeHex(0), 32)];
       await expect(
         ShieldInstance.finaliseWithdrawal(
           blockWithdrawalInvalid,
@@ -1460,7 +1485,7 @@ describe('Testing Shield Contract', function () {
         packedInfo,
         historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000001',
-        ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
+        ercAddress: ethers.zeroPadValue(erc20MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
         commitments: [
           '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
@@ -1485,9 +1510,12 @@ describe('Testing Shield Contract', function () {
         ],
       };
 
-      const transactionHashesRoot = ethers.utils.solidityKeccak256(
+      const transactionHashesRoot = ethers.solidityPackedKeccak256(
         ['uint256', 'uint256'],
-        [calculateTransactionHash(withdrawalTransactionInvalid), ethers.utils.hexZeroPad(0, 32)],
+        [
+          calculateTransactionHash(withdrawalTransactionInvalid),
+          ethers.zeroPadValue(ethers.toBeHex(0), 32),
+        ],
       );
 
       const packedInfoBlock = packBlockInfo(1, owner[0].address, 0);
@@ -1511,7 +1539,7 @@ describe('Testing Shield Contract', function () {
       await time.increase(86400 * 7 + 1);
 
       const index = 0;
-      const siblingPath = [transactionHashesRoot, ethers.utils.hexZeroPad(0, 32)];
+      const siblingPath = [transactionHashesRoot, ethers.zeroPadValue(ethers.toBeHex(0), 32)];
       await expect(
         ShieldInstance.finaliseWithdrawal(
           blockWithdrawalInvalid,
@@ -1660,7 +1688,7 @@ describe('Testing Shield Contract', function () {
 
       await expect(
         ShieldInstance.setAdvanceWithdrawalFee(block, depositTransaction, index, siblingPath, {
-          value: ethers.utils.parseEther('1'),
+          value: ethers.parseEther('1'),
         }),
       ).to.be.revertedWith('Shield: Can only advance withdrawals');
     });
@@ -1701,7 +1729,7 @@ describe('Testing Shield Contract', function () {
         packedInfo,
         historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
+        ercAddress: ethers.zeroPadValue(erc20MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
         commitments: [
           '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
@@ -1726,9 +1754,12 @@ describe('Testing Shield Contract', function () {
         ],
       };
 
-      const transactionHashesRoot = ethers.utils.solidityKeccak256(
+      const transactionHashesRoot = ethers.solidityPackedKeccak256(
         ['uint256', 'uint256'],
-        [calculateTransactionHash(withdrawTransactionERC721), ethers.utils.hexZeroPad(0, 32)],
+        [
+          calculateTransactionHash(withdrawTransactionERC721),
+          ethers.zeroPadValue(ethers.toBeHex(0), 32),
+        ],
       );
 
       const packedInfoBlock = packBlockInfo(1, owner[0].address, 0);
@@ -1750,7 +1781,10 @@ describe('Testing Shield Contract', function () {
       );
 
       const index = 0;
-      const siblingPath = [blockERC721.transactionHashesRoot, ethers.utils.hexZeroPad(0, 32)];
+      const siblingPath = [
+        blockERC721.transactionHashesRoot,
+        ethers.zeroPadValue(ethers.toBeHex(0), 32),
+      ];
       await expect(
         ShieldInstance.setAdvanceWithdrawalFee(
           blockERC721,
@@ -1758,7 +1792,7 @@ describe('Testing Shield Contract', function () {
           index,
           siblingPath,
           {
-            value: ethers.utils.parseEther('1'),
+            value: ethers.parseEther('1'),
           },
         ),
       ).to.be.revertedWith('Shield: Can only advance withdrawals for fungible tokens');
@@ -1774,7 +1808,7 @@ describe('Testing Shield Contract', function () {
 
       await expect(
         ShieldInstance.setAdvanceWithdrawalFee(block, withdrawTransaction, index, siblingPath, {
-          value: ethers.utils.parseEther('1'),
+          value: ethers.parseEther('1'),
         }),
       ).to.be.revertedWith('Shield: The block has already been finalized');
     });
@@ -1794,7 +1828,7 @@ describe('Testing Shield Contract', function () {
       );
       await expect(
         ShieldInstance.setAdvanceWithdrawalFee(block, withdrawTransaction, index, siblingPath, {
-          value: ethers.utils.parseEther('1'),
+          value: ethers.parseEther('1'),
         }),
       ).to.be.revertedWith('Shield: This transaction has already paid out');
     });
@@ -1815,7 +1849,7 @@ describe('Testing Shield Contract', function () {
 
       await expect(
         ShieldInstance.setAdvanceWithdrawalFee(block, withdrawTransaction, index, siblingPath, {
-          value: ethers.utils.parseEther('1'),
+          value: ethers.parseEther('1'),
         }),
       ).to.be.revertedWith('Shield: You are not the current owner of this withdrawal');
     });

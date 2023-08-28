@@ -37,8 +37,8 @@ describe('Client transactions API tests', () => {
     shieldAddress = nf3User.shieldContractAddress;
     stateAddress = nf3User.stateContractAddress;
 
-    web3Client.subscribeTo('logs', eventLogs, { address: shieldAddress });
-    web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+    await web3Client.subscribeTo('logs', eventLogs, { address: shieldAddress });
+    await web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
   });
 
   describe('Status', () => {

@@ -25,10 +25,8 @@ describe('Challenges contract Challenges functions', function () {
     });
     const updatedTimber = Timber.statelessUpdate(emptyTree, leaves, HASH_TYPE, TIMBER_HEIGHT);
     const { frontier, root, leafCount } = updatedTimber;
-    const frontierAfterBlock = frontier.concat(
-      Array(33 - frontier.length).fill(ethers.constants.HashZero),
-    );
-    const merkleRoot = await merkleTreeMock.callStatic.calculateRoot(frontierAfterBlock, leafCount);
+    const frontierAfterBlock = frontier.concat(Array(33 - frontier.length).fill(ethers.ZeroHash));
+    const merkleRoot = await merkleTreeMock.calculateRoot.staticCall(frontierAfterBlock, leafCount);
     try {
       expect(merkleRoot).to.equal(root);
     } catch {
@@ -61,20 +59,20 @@ describe('Challenges contract Challenges functions', function () {
     let updatedTimber = Timber.statelessUpdate(emptyTree, oldLeaves, HASH_TYPE, TIMBER_HEIGHT);
     const { frontier: oldFrontier, leafCount: oldLeafCount } = updatedTimber;
     const frontierBeforeBlocks = oldFrontier.concat(
-      Array(33 - oldFrontier.length).fill(ethers.constants.HashZero),
+      Array(33 - oldFrontier.length).fill(ethers.ZeroHash),
     );
 
     updatedTimber = Timber.statelessUpdate(updatedTimber, newLeaves, HASH_TYPE, TIMBER_HEIGHT);
     const { frontier } = updatedTimber;
 
-    const merkleFrontier = await merkleTreeMock.callStatic.updateFrontier(
+    const merkleFrontier = await merkleTreeMock.updateFrontier.staticCall(
       newLeaves,
       frontierBeforeBlocks,
       oldLeafCount,
     );
 
     for (const [index, front] of merkleFrontier.entries()) {
-      if (front !== ethers.constants.HashZero) {
+      if (front !== ethers.ZeroHash) {
         try {
           expect(front).to.be.eq(frontier[index]);
         } catch {
@@ -97,22 +95,22 @@ describe('Challenges contract Challenges functions', function () {
   beforeEach(async () => {
     const Poseidon = await ethers.getContractFactory('Poseidon');
     const poseidon = await Poseidon.deploy();
-    await poseidon.deployed();
+    await poseidon.waitForDeployment();
 
     const MerkleTree = await ethers.getContractFactory('MerkleTree_Stateless', {
       libraries: {
-        Poseidon: poseidon.address,
+        Poseidon: await poseidon.getAddress(),
       },
     });
     merkleTree = await MerkleTree.deploy();
-    await merkleTree.deployed();
+    await merkleTree.waitForDeployment();
     const MerkleTreeMock = await ethers.getContractFactory('MerkleTree_StatelessMock', {
       libraries: {
-        MerkleTree_Stateless: merkleTree.address,
+        MerkleTree_Stateless: await merkleTree.getAddress(),
       },
     });
     merkleTreeMock = await MerkleTreeMock.deploy();
-    await merkleTreeMock.deployed();
+    await merkleTreeMock.waitForDeployment();
   });
 
   afterEach(async () => {

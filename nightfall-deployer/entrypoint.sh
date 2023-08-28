@@ -8,7 +8,7 @@ if [ -z "${ETH_PRIVATE_KEY}" ]; then
 fi
 
 if [[ "${SKIP_DEPLOYMENT}" != "true" ]]; then
-  npx truffle compile --all
+  time npx truffle compile --all
 
   if [ -z "${UPGRADE}" ]; then
     echo "Deploying contracts to ${ETH_NETWORK}"

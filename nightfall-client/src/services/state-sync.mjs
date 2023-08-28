@@ -40,7 +40,8 @@ export const syncState = async (
   // Put all events together and sort chronologically as they appear on Ethereum
   const splicedList = pastStateEvents
     .concat(pastChallengeEvents)
-    .sort((a, b) => a.blockNumber - b.blockNumber);
+    // eslint-disable-next-line no-nested-ternary
+    .sort((a, b) => (a.blockNumber < b.blockNumber ? -1 : a.blockNumber > b.blockNumber ? 1 : 0));
   logger.info({ msg: 'Replaying past events' });
   for (let i = 0; i < splicedList.length; i++) {
     const pastEvent = splicedList[i];
@@ -68,7 +69,7 @@ const genGetCommitments = async (query = {}, proj = {}) => {
 // eslint-disable-next-line import/prefer-default-export
 export const initialClientSync = async () => {
   const allCommitments = await genGetCommitments();
-  const commitmentBlockNumbers = allCommitments.map(a => a.blockNumber).filter(n => n >= 0);
+  const commitmentBlockNumbers = allCommitments.map(a => a.blockNumber).filter(n => n >= 0n);
 
   logger.info(`commitmentBlockNumbers: ${commitmentBlockNumbers}`);
 

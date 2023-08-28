@@ -8,7 +8,7 @@ describe('Verifier tests', function () {
   beforeEach(async () => {
     const VerifierDeployer = await ethers.getContractFactory('Verifier');
     VerifierInstance = await VerifierDeployer.deploy();
-    await VerifierInstance.deployed();
+    await VerifierInstance.waitForDeployment();
   });
 
   afterEach(async () => {

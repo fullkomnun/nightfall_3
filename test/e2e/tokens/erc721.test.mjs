@@ -76,7 +76,7 @@ describe('ERC721 tests', () => {
     erc20Address = await nf3User.getContractAddress('ERC20Mock');
     erc721Address = await nf3User.getContractAddress('ERC721Mock');
     stateAddress = await nf3User.stateContractAddress;
-    web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+    await web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
     availableTokenIds = (
       await getERCInfo(erc721Address, nf3User.ethereumAddress, web3, {

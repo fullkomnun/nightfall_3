@@ -2,7 +2,7 @@
 /**
 utility to generate some ethereum private keys and addresses
 */
-import Web3 from 'web3';
+import { Web3 } from 'web3';
 import { rand } from './crypto-random.mjs';
 
 const web3 = new Web3();

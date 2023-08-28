@@ -61,7 +61,7 @@ describe('DerParser contract functions', function () {
     let tlvLength;
 
     X509Instance = await X509Deployer.deploy();
-
+    await X509Instance.waitForDeployment();
     await X509Instance.initialize();
     await X509Instance.setTrustedPublicKey(nightfallRootPublicKey, authorityKeyIdentifier);
     await X509Instance.enableWhitelisting(true);
@@ -107,21 +107,30 @@ describe('DerParser contract functions', function () {
     entrustSignature = signEthereumAddress(entrustPrivateKey, addressToSign);
   });
 
+  // eslint-disable-next-line no-extend-native
+  BigInt.prototype.toJSON = function () {
+    return this.toString();
+  };
+
   it('Should parse the intermediate CA cert DER encoding', async function () {
     const intermediateCaCert = certChain[1];
+    const abi = X509Instance.interface.formatJson();
+    console.log(abi);
     const result = await X509Instance.parseDER(
       intermediateCaCert.derBuffer,
       0,
       intermediateCaCert.tlvLength,
     );
+    console.log(`tlvs `, result);
+    // console.log(`tlvs ${JSON.stringify(result, null, 2)}`);
     const tlvs = result.map(tlv => makeTlv(tlv));
     // make a few checks on the output
     expect(tlvs[0].tag.tagType).to.equal('SEQUENCE');
     expect(tlvs[0].depth).to.equal(0);
     expect(tlvs[1].tag.tagType).to.equal('SEQUENCE');
     expect(tlvs[1].depth).to.equal(1);
-    expect(tlvs[intermediateCaCert.tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
-    expect(tlvs[intermediateCaCert.tlvLength - 1].depth).to.equal(1);
+    expect(tlvs[intermediateCaCert.tlvLength - 1n].tag.tagType).to.equal('BIT_STRING');
+    expect(tlvs[intermediateCaCert.tlvLength - 1n].depth).to.equal(1);
   });
 
   it('Should parse the end-user cert DER encoding', async function () {
@@ -133,8 +142,8 @@ describe('DerParser contract functions', function () {
     expect(tlvs[0].depth).to.equal(0);
     expect(tlvs[1].tag.tagType).to.equal('SEQUENCE');
     expect(tlvs[1].depth).to.equal(1);
-    expect(tlvs[endUserCert.tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
-    expect(tlvs[endUserCert.tlvLength - 1].depth).to.equal(1);
+    expect(tlvs[endUserCert.tlvLength - 1n].tag.tagType).to.equal('BIT_STRING');
+    expect(tlvs[endUserCert.tlvLength - 1n].depth).to.equal(1);
   });
 
   it('Should parse the end-user mock Digicert cert DER encoding', async function () {
@@ -146,8 +155,8 @@ describe('DerParser contract functions', function () {
     expect(tlvs[0].depth).to.equal(0);
     expect(tlvs[1].tag.tagType).to.equal('SEQUENCE');
     expect(tlvs[1].depth).to.equal(1);
-    expect(tlvs[endUserCert.tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
-    expect(tlvs[endUserCert.tlvLength - 1].depth).to.equal(1);
+    expect(tlvs[endUserCert.tlvLength - 1n].tag.tagType).to.equal('BIT_STRING');
+    expect(tlvs[endUserCert.tlvLength - 1n].depth).to.equal(1);
   });
 
   it('Should parse the end-user mock Entrust cert DER encoding', async function () {
@@ -159,8 +168,8 @@ describe('DerParser contract functions', function () {
     expect(tlvs[0].depth).to.equal(0);
     expect(tlvs[1].tag.tagType).to.equal('SEQUENCE');
     expect(tlvs[1].depth).to.equal(1);
-    expect(tlvs[endUserCert.tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
-    expect(tlvs[endUserCert.tlvLength - 1].depth).to.equal(1);
+    expect(tlvs[endUserCert.tlvLength - 1n].tag.tagType).to.equal('BIT_STRING');
+    expect(tlvs[endUserCert.tlvLength - 1n].depth).to.equal(1);
   });
 
   it('Should verify the signature over the users ethereum address', async function () {
@@ -187,7 +196,7 @@ describe('DerParser contract functions', function () {
         true,
         false,
         0,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
       );
       expect.fail('The certificate check passed, but it should have failed');
     } catch (err) {
@@ -201,11 +210,11 @@ describe('DerParser contract functions', function () {
     await X509Instance.validateCertificate(
       certChain[1].derBuffer,
       certChain[1].tlvLength,
-      0,
+      ethers.ZeroHash,
       false,
       false,
       0,
-      ethers.constants.AddressZero,
+      ethers.ZeroAddress,
     );
 
     if (!TEST_SELF_GENERATED_CERTS) {
@@ -217,7 +226,7 @@ describe('DerParser contract functions', function () {
         true,
         false,
         1,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
       );
 
       // now presenting the Entrust mock cert should also work
@@ -228,7 +237,7 @@ describe('DerParser contract functions', function () {
         true,
         false,
         2,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
       );
     }
 
@@ -243,7 +252,7 @@ describe('DerParser contract functions', function () {
       true,
       false,
       oidIndex,
-      ethers.constants.AddressZero,
+      ethers.ZeroAddress,
     );
 
     // we should now be able to pass an x509 check for this address
@@ -269,7 +278,7 @@ describe('DerParser contract functions', function () {
           true,
           false,
           oidIndex,
-          ethers.constants.AddressZero,
+          ethers.ZeroAddress,
         );
         expect.fail('The certificate check passed, but it should have failed');
       } catch (err) {

@@ -1,5 +1,5 @@
 import config from 'config';
-import Web3 from 'web3';
+import { Web3 } from 'web3';
 import axios from 'axios';
 
 const { COMMAND = '' } = process.env;

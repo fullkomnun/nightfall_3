@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 /* ignore unused exports */
 import axios from 'axios';
-import Web3 from 'web3';
+import { Web3 } from 'web3';
 import chai from 'chai';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
@@ -60,35 +60,38 @@ export class Web3Client {
     }
   }
 
-  subscribeTo(event, queue, options) {
-    if (event === 'newBlockHeaders') {
-      this.web3.eth.subscribe('newBlockHeaders').on('data', () => {
+  async subscribeTo(event, queue, options = undefined) {
+    const subscription = await this.web3.eth.subscribe(event, options);
+    subscription.on('data', payload => {
+      if (!payload.topics) {
         queue.push('newBlockHeaders');
-      });
-    } else {
-      this.web3.eth.subscribe(event, options).on('data', log => {
-        for (const topic of log.topics) {
+      } else {
+        for (const topic of payload.topics) {
           switch (topic) {
             case topicEventMapping.BlockProposed:
-              queue.push({ eventName: 'blockProposed', log });
+              queue.push({ eventName: 'blockProposed', payload });
               break;
             case topicEventMapping.TransactionSubmitted:
-              queue.push({ eventName: 'TransactionSubmitted', log });
+              queue.push({ eventName: 'TransactionSubmitted', payload });
               break;
             case topicEventMapping.NewCurrentProposer:
-              queue.push({ eventName: 'NewCurrentProposer', log });
+              queue.push({ eventName: 'NewCurrentProposer', payload });
               break;
             default:
-              queue.push({ eventName: 'Challenge', log });
+              queue.push({ eventName: 'Challenge', payload });
               break;
           }
         }
-      });
-    }
+      }
+    });
+    subscription.on('error', error =>
+      logger.error(`Error when subscribing to '${event}': ${error}`),
+    );
+    return subscription;
   }
 
   closeWeb3() {
-    this.web3.currentProvider.connection.close();
+    this.web3.currentProvider?.disconnect();
   }
 
   setNonce(privateKey, _nonce) {
@@ -166,14 +169,14 @@ export class Web3Client {
 
   // This only works with Ganache but it can move block time forwards
   async timeJump(secs) {
-    await this.web3.currentProvider.send({
+    await this.web3.currentProvider.request({
       jsonrpc: '2.0',
       method: 'evm_increaseTime',
       params: [secs],
       id: 0,
     });
 
-    await this.web3.currentProvider.send({
+    await this.web3.currentProvider.request({
       jsonrpc: '2.0',
       method: 'evm_mine',
       params: [],
@@ -235,12 +238,13 @@ export class Web3Client {
 
     const blockHeaders = [];
 
-    await this.subscribeTo('newBlockHeaders', blockHeaders);
+    const subscription = await this.subscribeTo('newBlockHeaders', blockHeaders);
 
     while (blockHeaders.length < 12) {
       await waitForTimeout(3000);
     }
 
+    await subscription.unsubscribe();
     // Have to wait here as client block proposal takes longer now
     await waitForTimeout(3000);
     return { eventLogs, eventsSeen };

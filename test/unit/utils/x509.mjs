@@ -46,24 +46,16 @@ well-structured TLV object
 */
 
 export function makeTlv(struct) {
-  const {
-    start: _start,
-    headerLength: _headerLength,
-    tag: _tag,
-    _length,
-    value,
-    octets,
-    depth: _depth,
-  } = struct;
+  const [_start, _headerLength, _tag, _length, value, octets, _depth] = struct;
   const { isConstructed, tagType } = _tag;
   const tlv = {
-    start: _start.toNumber(),
-    headerLength: _headerLength.toNumber(),
+    start: BigInt.asUintN(64, _start),
+    headerLength: BigInt.asUintN(64, _headerLength),
     tag: { isConstructed, tagType: derMapping[parseInt(tagType, 16)] },
-    length: _length.toNumber(),
+    length: BigInt.asUintN(64, _length),
     value,
     octets,
-    depth: _depth.toNumber(),
+    depth: BigInt.asUintN(64, _depth),
   };
   return tlv;
 }

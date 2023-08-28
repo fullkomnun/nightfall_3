@@ -7,7 +7,7 @@ import figlet from 'figlet';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import clear from 'clear';
-import Web3 from 'web3';
+import { Web3 } from 'web3';
 import { getTokenNames } from '../services/helpers.mjs';
 
 const web3 = new Web3();

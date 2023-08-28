@@ -1,3 +1,4 @@
+/* eslint-disable no-use-before-define */
 /**
  * Functions for storing blockchain data that the optimist application needs to
  * remember wholesale because otherwise it would have to be constructed in real-
@@ -280,12 +281,14 @@ export async function saveTransaction(_transaction) {
     ..._transaction,
     mempool,
     blockNumberL2,
+    proof: _transaction.proof.map(x => x.toString()),
   };
   logger.debug({
     msg: 'Saving transaction',
     transactionHash: _transaction.transactionHash,
     blockNumber: _transaction.blockNumber,
   });
+  logger.debug(JSON.stringify(_transaction, null, 2));
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   return db.collection(TRANSACTIONS_COLLECTION).insertOne(transaction);
@@ -361,7 +364,11 @@ export async function getMempoolTransactions() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { mempool: true }; // Transactions in the mempool
-  return db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
+  return db
+    .collection(TRANSACTIONS_COLLECTION)
+    .find(query)
+    .toArray()
+    .then(txs => txs.map(convertProofsToBigints));
 }
 
 /**
@@ -374,7 +381,19 @@ export async function getMempoolTransactionsSortedByFee() {
     .collection(TRANSACTIONS_COLLECTION)
     .find({ mempool: true }, { _id: 0 })
     .sort({ fee: -1 })
-    .toArray();
+    .toArray()
+    .then(txs => txs.map(convertProofsToBigints));
+}
+
+function convertProofsToBigints(tx) {
+  if (!tx) return null;
+  // eslint-disable-next-line no-param-reassign
+  return {
+    ...tx,
+    proof: tx.proof.map(value => {
+      return BigInt(value);
+    }),
+  };
 }
 
 /**
@@ -385,7 +404,7 @@ async function getMempoolTransaction(query) {
   const db = connection.db(OPTIMIST_DB);
   // eslint-disable-next-line no-param-reassign
   query.mempool = true;
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(query).then(convertProofsToBigints);
 }
 
 /**
@@ -422,7 +441,7 @@ export async function getTransactionByTransactionHash(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHash };
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(query).then(convertProofsToBigints);
 }
 
 /**
@@ -432,7 +451,11 @@ export async function getTransactionsByTransactionHashes(transactionHashes) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHash: { $in: transactionHashes } };
-  const returnedTransactions = await db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
+  const returnedTransactions = await db
+    .collection(TRANSACTIONS_COLLECTION)
+    .find(query)
+    .toArray()
+    .then(txs => txs.map(convertProofsToBigints));
   // Create a dictionary where we will store the correct position ordering
   const positions = {};
   // Use the ordering of txHashes in the block to fill the dictionary-indexed by txHash
@@ -454,7 +477,11 @@ export async function getTransactionsByTransactionHashesByL2Block(transactionHas
     transactionHash: { $in: transactionHashes },
     blockNumberL2: { $eq: block.blockNumberL2 },
   };
-  const returnedTransactions = await db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
+  const returnedTransactions = await db
+    .collection(TRANSACTIONS_COLLECTION)
+    .find(query)
+    .toArray()
+    .then(txs => txs.map(convertProofsToBigints));
   // Create a dictionary where we will store the correct position ordering
   const positions = {};
   // Use the ordering of txHashes in the block to fill the dictionary-indexed by txHash
@@ -503,7 +530,7 @@ export async function getTransactionL2ByCommitment(commitmentHash, blockNumberL2
     commitments: { $in: [commitmentHash] },
     blockNumberL2: { $gt: -1, $ne: blockNumberL2OfTx },
   };
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(query).then(convertProofsToBigints);
 }
 
 export async function getTransactionL2ByNullifier(nullifierHash, blockNumberL2OfTx) {
@@ -513,7 +540,7 @@ export async function getTransactionL2ByNullifier(nullifierHash, blockNumberL2Of
     nullifiers: { $in: [nullifierHash] },
     blockNumberL2: { $gt: -1, $ne: blockNumberL2OfTx },
   };
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(query).then(convertProofsToBigints);
 }
 
 /**
@@ -634,15 +661,18 @@ export async function setTransactionHashSiblingInfo(
 export async function getTransactionHashSiblingInfo(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(
-    { transactionHash },
-    {
-      projection: {
-        transactionHashSiblingPath: 1,
-        transactionHashLeafIndex: 1,
-        transactionHashesRoot: 1,
-        isOnChain: 1,
+  return db
+    .collection(TRANSACTIONS_COLLECTION)
+    .findOne(
+      { transactionHash },
+      {
+        projection: {
+          transactionHashSiblingPath: 1,
+          transactionHashLeafIndex: 1,
+          transactionHashesRoot: 1,
+          isOnChain: 1,
+        },
       },
-    },
-  );
+    )
+    .then(convertProofsToBigints);
 }

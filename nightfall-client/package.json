@@ -25,9 +25,9 @@
   "dependencies": {
     "amqplib": "^0.8.0",
     "async-mutex": "^0.3.1",
-    "axios": "^0.21.4",
+    "axios": "^1.4.0",
     "bip39": "^3.0.4",
-    "body-parser": "1.19.0",
+    "body-parser": "^1.20.2",
     "chai-as-promised": "^7.1.1",
     "common-files": "file:./../common-files",
     "config": "^3.3.1",
@@ -37,11 +37,11 @@
     "general-number": "^1.0.1",
     "hex-to-binary": "^1.0.1",
     "keccak": "^3.0.1",
-    "mongodb": "^4.7.0",
+    "mongodb": "^5.8.0",
     "path": "^0.12.7",
-    "queue": "^6.0.2",
+    "queue": "^7.0.0",
     "safe-buffer": "^5.2.1",
-    "web3": "^1.7.5",
+    "web3": "^4.1.1",
     "ws": "^7.5.0"
   },
   "devDependencies": {
@@ -55,8 +55,8 @@
     ]
   },
   "overrides": {
-    "swarm-js": {
-      "got": "11.8.5"
+    "web3": {
+      "web3-validator": "1.0.2"
     }
   }
 }

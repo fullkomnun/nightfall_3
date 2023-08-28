@@ -1,4 +1,4 @@
-import Web3 from 'web3';
+// import { Web3 } from 'web3';
 import getAbi from './abi.mjs';
 import { TOKEN_TYPE, APPROVE_AMOUNT } from './constants.mjs';
 import { fromBaseUnit } from './units.mjs';
@@ -27,9 +27,9 @@ async function approve(
   switch (tokenType) {
     case TOKEN_TYPE.ERC20: {
       const allowance = await ercContract.methods.allowance(ownerAddress, spenderAddress).call();
-      const allowanceBN = new Web3.utils.BN(allowance);
-      const valueBN = new Web3.utils.BN(value);
-      if (allowanceBN.lt(valueBN)) {
+      // const allowanceBN = new Web3.utils.BN(allowance);
+      // const valueBN = new Web3.utils.BN(value);
+      if (allowance < value) {
         if (process.env.USER_ETHEREUM_SIGNING_KEY || encodeABI)
           return ercContract.methods.approve(spenderAddress, APPROVE_AMOUNT).encodeABI();
         await ercContract.methods

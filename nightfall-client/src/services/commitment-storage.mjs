@@ -168,6 +168,7 @@ export async function getCommitmentsByTransactionHashL1(transactionHashCommitted
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).find({ transactionHashCommittedL1 }).toArray();
 }
+
 // function to retrieve commitments by transactionhash of the block in which they were
 // nullified
 export async function getNullifiedByTransactionHashL1(transactionHashNullifiedL1) {
@@ -179,12 +180,12 @@ export async function getNullifiedByTransactionHashL1(transactionHashNullifiedL1
 export async function getSiblingInfo(commitment) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  return db
-    .collection(COMMITMENTS_COLLECTION)
-    .findOne(
-      { _id: commitment.hash.hex(32) },
-      { projection: { siblingPath: 1, root: 1, order: 1, isOnChain: 1, leafIndex: 1 } },
-    );
+  return db.collection(COMMITMENTS_COLLECTION).findOne(
+    { _id: commitment.hash.hex(32) },
+    {
+      projection: { siblingPath: 1, root: 1, order: 1, isOnChain: 1, leafIndex: 1 },
+    },
+  );
 }
 
 /*

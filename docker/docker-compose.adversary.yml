@@ -91,7 +91,7 @@ services:
     command: ['npm', 'run', 'dev']
 
   mongodb-adversary:
-    image: mongo:4.4.1-bionic
+    image: mongo:7-jammy
     hostname: mongodb-adversary
     # ports:
     #   - 27018:27017

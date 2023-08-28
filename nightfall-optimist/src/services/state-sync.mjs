@@ -60,7 +60,8 @@ export async function syncState(
     .concat(pastShieldEvents)
     .concat(pastStateEvents)
     .concat(pastChallengeEvents)
-    .sort((a, b) => a.blockNumber - b.blockNumber);
+    // eslint-disable-next-line no-nested-ternary
+    .sort((a, b) => (a.blockNumber < b.blockNumber ? -1 : a.blockNumber > b.blockNumber ? 1 : 0));
   logger.info({ msg: 'Replaying past events' });
   for (let i = 0; i < splicedList.length; i++) {
     const pastEvent = splicedList[i];
@@ -101,16 +102,16 @@ const checkBlocks = async () => {
         // if we are in the first iteration it means we have a problem with our internal data
         // let's just restart the sync from earliest,
         // else let's just scan from the Ethereum blockNumber that is one more than our known correct block.
-        const fromBlock = i === 0 ? 'earliest' : blocks[i - 1].blockNumber + 1;
+        const fromBlock = i === 0n ? 'earliest' : blocks[i - 1].blockNumber + 1n;
         // we will scan the gap up to the blockNumber of the current blocks
-        const toBlock = blocks[i].blockNumber - 1;
+        const toBlock = blocks[i].blockNumber - 1n;
         gapArray.push([fromBlock, toBlock]);
         // reset so we can find more
         expectedLeafCount = blocks[i].leafCount;
       }
     }
     if (gapArray.length > 0) return gapArray; // We found some missing blocks
-    const fromBlock = blocks[blocks.length - 1].blockNumber + 1;
+    const fromBlock = blocks[blocks.length - 1].blockNumber + 1n;
     return [[fromBlock, 'latest']];
   }
   return [['earliest', 'latest']];
@@ -118,10 +119,8 @@ const checkBlocks = async () => {
 
 export async function initialBlockSync(proposer) {
   const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
-  const lastBlockNumberL2 = Number(
-    (await stateContractInstance.methods.getNumberOfL2Blocks().call()) - 1,
-  );
-  if (lastBlockNumberL2 === -1) {
+  const lastBlockNumberL2 = (await stateContractInstance.methods.getNumberOfL2Blocks().call()) - 1n;
+  if (lastBlockNumberL2 === -1n) {
     unpauseQueue(0); // queues are started paused, therefore we need to unpause them before proceeding.
     unpauseQueue(1);
     try {
@@ -139,7 +138,7 @@ export async function initialBlockSync(proposer) {
   const missingBlocks = await checkBlocks(); // Stores any gaps of missing blocks
   const latestBlockLocally = (await getBlockByBlockNumberL2(lastBlockNumberL2)) ?? undefined;
 
-  if (!latestBlockLocally || missingBlocks[0] !== latestBlockLocally.blockNumber + 1) {
+  if (!latestBlockLocally || missingBlocks[0] !== latestBlockLocally.blockNumber + 1n) {
     // The latest block stored locally does not match the last on-chain block
     // or we have detected a gap in the L2 blockchain
     stopMakingChallenges();

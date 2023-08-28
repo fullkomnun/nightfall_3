@@ -1,4 +1,4 @@
-import Web3 from 'web3';
+import { Web3 } from 'web3';
 
 /**
  * Checkes if passed object is of type string
@@ -23,8 +23,8 @@ function toBaseUnit(value, decimals = 9) {
     return value;
   }
 
-  const ten = new Web3.utils.BN(10);
-  const base = ten.pow(new Web3.utils.BN(decimals));
+  // const ten = 10n;//new Web3.utils.BN(10);
+  const base = 10n ** decimals; // ten.pow(new Web3.utils.BN(decimals));
 
   // Is it negative?
   const negative = value.substring(0, 1) === '-';
@@ -60,9 +60,9 @@ function toBaseUnit(value, decimals = 9) {
   while (fraction.length < decimals) {
     fraction += '0';
   }
-  whole = new Web3.utils.BN(whole);
-  fraction = new Web3.utils.BN(fraction);
-  const wei = whole.mul(base).add(fraction);
+  whole = new BigInt(whole); // new Web3.utils.BN(whole);
+  fraction = new BigInt(fraction); // new Web3.utils.BN(fraction);
+  const wei = whole * base + fraction; // whole.mul(base).add(fraction);
 
   // return new Web3.utils.BN(wei.toString(10), 10);
   return wei.toString(10);
@@ -79,9 +79,9 @@ function fromBaseUnit(value, decimals) {
     throw new Error('Pass strings to prevent floating point precision issues.');
   }
 
-  const { unitMap } = Web3.utils;
+  const { ethUnitMap } = Web3.utils;
   const factor = 10 ** decimals;
-  const unit = Object.keys(unitMap).find(key => unitMap[key] === factor.toString());
+  const unit = Object.keys(ethUnitMap).find(key => ethUnitMap[key] === factor.toString());
 
   return Web3.utils.fromWei(value, unit);
 }

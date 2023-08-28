@@ -41,47 +41,47 @@ describe('Challenges contract Challenges functions', function () {
 
     const Proposers = await ethers.getContractFactory('Proposers');
     ProposersInstance = await upgrades.deployProxy(Proposers, []);
-    await ProposersInstance.deployed();
+    await ProposersInstance.waitForDeployment();
 
     const Verifier = await ethers.getContractFactory('Verifier');
     const verifier = await Verifier.deploy();
-    await verifier.deployed();
+    await verifier.waitForDeployment();
 
     const Poseidon = await ethers.getContractFactory('Poseidon');
     const poseidon = await Poseidon.deploy();
-    await poseidon.deployed();
+    await poseidon.waitForDeployment();
 
     const MerkleTree = await ethers.getContractFactory('MerkleTree_Stateless', {
       libraries: {
-        Poseidon: poseidon.address,
+        Poseidon: await poseidon.getAddress(),
       },
     });
     merkleTree = await MerkleTree.deploy();
-    await merkleTree.deployed();
+    await merkleTree.waitForDeployment();
 
     const ChallengesUtil = await ethers.getContractFactory('ChallengesUtil', {
       libraries: {
-        MerkleTree_Stateless: merkleTree.address,
+        MerkleTree_Stateless: await merkleTree.getAddress(),
       },
     });
     challengesUtil = await ChallengesUtil.deploy();
-    await challengesUtil.deployed();
+    await challengesUtil.waitForDeployment();
 
     const Utils = await ethers.getContractFactory('Utils');
     const utils = await Utils.deploy();
-    await utils.deployed();
+    await utils.waitForDeployment();
 
     const Challenges = await ethers.getContractFactory('Challenges', {
       libraries: {
-        Verifier: verifier.address,
-        ChallengesUtil: challengesUtil.address,
-        Utils: utils.address,
+        Verifier: await verifier.getAddress(),
+        ChallengesUtil: await challengesUtil.getAddress(),
+        Utils: await utils.getAddress(),
       },
     });
     challenges = await upgrades.deployProxy(Challenges, [], {
       unsafeAllow: ['external-library-linking'],
     });
-    await challenges.deployed();
+    await challenges.waitForDeployment();
 
     const X509 = await ethers.getContractFactory('X509');
     const x509 = await upgrades.deployProxy(X509, []);
@@ -91,29 +91,33 @@ describe('Challenges contract Challenges functions', function () {
     const sanctionsListMockInstance = await SanctionsListMockDeployer.deploy(
       sanctionedSigner.address,
     );
-    const sanctionsListAddress = sanctionsListMockInstance.address;
+    const sanctionsListAddress = await sanctionsListMockInstance.getAddress();
 
     const Shield = await ethers.getContractFactory('Shield');
     shield = await upgrades.deployProxy(Shield, [], {
       initializer: 'initializeState',
     });
-    await shield.deployed();
+    await shield.waitForDeployment();
 
     const State = await ethers.getContractFactory('State', {
       libraries: {
-        Utils: utils.address,
+        Utils: await utils.getAddress(),
       },
     });
-    state = await upgrades.deployProxy(State, [addr1.address, challenges.address, shield.address], {
-      unsafeAllow: ['external-library-linking'],
-      initializer: 'initializeState',
-    });
-    await state.deployed();
+    state = await upgrades.deployProxy(
+      State,
+      [addr1.address, await challenges.getAddress(), await shield.getAddress()],
+      {
+        unsafeAllow: ['external-library-linking'],
+        initializer: 'initializeState',
+      },
+    );
+    await state.waitForDeployment();
 
-    await ProposersInstance.setStateContract(state.address);
+    await ProposersInstance.setStateContract(await state.getAddress());
 
-    await challenges.setStateContract(state.address);
-    await challenges.setAuthorities(sanctionsListAddress, x509.address);
+    await challenges.setStateContract(await state.getAddress());
+    await challenges.setAuthorities(sanctionsListAddress, await x509.getAddress());
   });
 
   afterEach(async () => {
@@ -139,7 +143,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      await state.getAddress(),
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -158,7 +162,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.proposeBlock(newTx.block, [newTx.withdrawTransaction, newTx.depositTransaction], {
       value: 10,
     });
-    const hashedTx = ethers.utils.solidityKeccak256(
+    const hashedTx = ethers.solidityPackedKeccak256(
       ['string', 'string'],
       [newTx.withdrawTransaction, newTx.depositTransaction],
     );
@@ -167,8 +171,8 @@ describe('Challenges contract Challenges functions', function () {
 
     const receipt = await tx.wait();
 
-    const eventCommittedToChallenge = receipt.events.find(
-      event => event.event === 'CommittedToChallenge',
+    const eventCommittedToChallenge = receipt.logs.find(
+      event => event.eventName === 'CommittedToChallenge',
     );
     const { commitHash, sender } = eventCommittedToChallenge.args;
 
@@ -194,7 +198,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      await state.getAddress(),
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -213,7 +217,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.proposeBlock(newTx.block, [newTx.withdrawTransaction, newTx.depositTransaction], {
       value: 10,
     });
-    const hashedTx = ethers.utils.solidityKeccak256(
+    const hashedTx = ethers.solidityPackedKeccak256(
       ['string', 'string'],
       [newTx.withdrawTransaction, newTx.depositTransaction],
     );
@@ -222,8 +226,8 @@ describe('Challenges contract Challenges functions', function () {
 
     const receipt = await tx.wait();
 
-    const eventCommittedToChallenge = receipt.events.find(
-      event => event.event === 'CommittedToChallenge',
+    const eventCommittedToChallenge = receipt.logs.find(
+      event => event.eventName === 'CommittedToChallenge',
     );
     const { commitHash, sender } = eventCommittedToChallenge.args;
 
@@ -254,7 +258,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      await state.getAddress(),
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -276,14 +280,14 @@ describe('Challenges contract Challenges functions', function () {
     const salt = (await rand(32)).hex(32);
     // eslint-disable-next-line prefer-destructuring
     const data = (
-      await challenges.populateTransaction.challengeLeafCountCorrect(
+      await challenges.challengeLeafCountCorrect.populateTransaction(
         transactionsCreated.block,
         newTx.block,
         [newTx.withdrawTransaction, newTx.depositTransaction],
         salt,
       )
     ).data;
-    const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+    const hashedData = ethers.solidityPackedKeccak256(['bytes'], [data]);
     await challenges.commitToChallenge(hashedData);
     await challenges.challengeLeafCountCorrect(
       transactionsCreated.block,
@@ -291,7 +295,7 @@ describe('Challenges contract Challenges functions', function () {
       [newTx.withdrawTransaction, newTx.depositTransaction],
       salt,
     );
-    expect(await challenges.committers(hashedData)).to.equal(ethers.constants.AddressZero);
+    expect(await challenges.committers(hashedData)).to.equal(ethers.ZeroAddress);
   });
 
   it('should not challengeLeafCountCorrect: Cannot challenge block', async function () {
@@ -315,7 +319,7 @@ describe('Challenges contract Challenges functions', function () {
       await state.setCurrentProposer(addr1.address);
       await state.setStakeAccount(addr1.address, amount, challengeLocked);
       await setCommitmentHashEscrowed(
-        state.address,
+        await state.getAddress(),
         transactionsCreated.depositTransaction.commitments,
       );
       await state.proposeBlock(
@@ -337,14 +341,14 @@ describe('Challenges contract Challenges functions', function () {
       const salt = (await rand(32)).hex(32);
       // eslint-disable-next-line prefer-destructuring
       const data = (
-        await challenges.populateTransaction.challengeLeafCountCorrect(
+        await challenges.challengeLeafCountCorrect.populateTransaction(
           transactionsCreated.block,
           newTx.block,
           [newTx.withdrawTransaction, newTx.depositTransaction],
           salt,
         )
       ).data;
-      const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+      const hashedData = ethers.solidityPackedKeccak256(['bytes'], [data]);
       await challenges.commitToChallenge(hashedData);
       await ethers.provider.send('evm_increaseTime', [604800]); // + 1 week
       await ethers.provider.send('evm_mine');
@@ -380,7 +384,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      await state.getAddress(),
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -403,14 +407,14 @@ describe('Challenges contract Challenges functions', function () {
     const salt = (await rand(32)).hex(32);
     // eslint-disable-next-line prefer-destructuring
     const data = (
-      await challenges.populateTransaction.challengeLeafCountCorrect(
+      await challenges.challengeLeafCountCorrect.populateTransaction(
         transactionsCreated.block,
         newTx.block,
         [newTx.withdrawTransaction, newTx.depositTransaction],
         salt,
       )
     ).data;
-    const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+    const hashedData = ethers.solidityPackedKeccak256(['bytes'], [data]);
     await challenges.commitToChallenge(hashedData);
     await expect(
       challenges.challengeLeafCountCorrect(
@@ -440,7 +444,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      await state.getAddress(),
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -489,7 +493,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      await state.getAddress(),
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -525,14 +529,14 @@ describe('Challenges contract Challenges functions', function () {
     const salt = (await rand(32)).hex(32);
     // eslint-disable-next-line prefer-destructuring
     const data = (
-      await challenges.populateTransaction.challengeLeafCountCorrect(
+      await challenges.challengeLeafCountCorrect.populateTransaction(
         transactionsCreated.block,
         newTx2.block,
         [newTx2.withdrawTransaction, newTx2.depositTransaction],
         salt,
       )
     ).data;
-    const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+    const hashedData = ethers.solidityPackedKeccak256(['bytes'], [data]);
     await challenges.commitToChallenge(hashedData);
     await expect(
       challenges.challengeLeafCountCorrect(
@@ -563,7 +567,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      await state.getAddress(),
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -597,18 +601,18 @@ describe('Challenges contract Challenges functions', function () {
     const salt = '0x06032a0304000000000000000000000000000000000000000000000000000000';
     // eslint-disable-next-line prefer-destructuring
     const data = (
-      await challenges.populateTransaction.challengeHistoricRootBlockNumber(
+      await challenges.challengeHistoricRootBlockNumber.populateTransaction(
         TransactionInfoBlock,
         salt,
       )
     ).data;
-    const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+    const hashedData = ethers.solidityPackedKeccak256(['bytes'], [data]);
     await challenges.commitToChallenge(hashedData);
     const tx = await challenges.challengeHistoricRootBlockNumber(TransactionInfoBlock, salt);
 
     const receipt = await tx.wait();
 
-    const eventRollback = receipt.events.find(event => event.event === 'Rollback');
+    const eventRollback = receipt.logs.find(event => event.eventName === 'Rollback');
     const [blockNumberL2] = eventRollback.args;
 
     const unpackedBlockInfo = unpackBlockInfo(newTx.block.packedInfo);
@@ -634,7 +638,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      await state.getAddress(),
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -689,12 +693,12 @@ describe('Challenges contract Challenges functions', function () {
     const salt = '0x06032a0304000000000000000000000000000000000000000000000000000000';
     // eslint-disable-next-line prefer-destructuring
     const data = (
-      await challenges.populateTransaction.challengeHistoricRootBlockNumber(
+      await challenges.challengeHistoricRootBlockNumber.populateTransaction(
         TransactionInfoBlock,
         salt,
       )
     ).data;
-    const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+    const hashedData = ethers.solidityPackedKeccak256(['bytes'], [data]);
     await challenges.commitToChallenge(hashedData);
     await expect(
       challenges.challengeHistoricRootBlockNumber(TransactionInfoBlock, salt),
@@ -720,7 +724,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      await state.getAddress(),
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -768,7 +772,7 @@ describe('Challenges contract Challenges functions', function () {
 
     // eslint-disable-next-line prefer-destructuring
     const data = (
-      await challenges.populateTransaction.challengeCommitment(
+      await challenges.challengeCommitment.populateTransaction(
         Transaction1InfoBlock,
         Transaction2InfoBlock,
         0,
@@ -776,7 +780,7 @@ describe('Challenges contract Challenges functions', function () {
         salt,
       )
     ).data;
-    const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+    const hashedData = ethers.solidityPackedKeccak256(['bytes'], [data]);
     await challenges.commitToChallenge(hashedData);
     const tx = await challenges.challengeCommitment(
       Transaction1InfoBlock,
@@ -788,7 +792,7 @@ describe('Challenges contract Challenges functions', function () {
 
     const receipt = await tx.wait();
 
-    const eventRollback = receipt.events.find(event => event.event === 'Rollback');
+    const eventRollback = receipt.logs.find(event => event.eventName === 'Rollback');
     const [blockNumberL2] = eventRollback.args;
 
     const unpackedBlockInfo = unpackBlockInfo(newTx.block.packedInfo);
@@ -814,7 +818,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      await state.getAddress(),
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -862,7 +866,7 @@ describe('Challenges contract Challenges functions', function () {
 
     // eslint-disable-next-line prefer-destructuring
     const data = (
-      await challenges.populateTransaction.challengeCommitment(
+      await challenges.challengeCommitment.populateTransaction(
         Transaction2InfoBlock,
         Transaction1InfoBlock,
         0,
@@ -870,7 +874,7 @@ describe('Challenges contract Challenges functions', function () {
         salt,
       )
     ).data;
-    const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+    const hashedData = ethers.solidityPackedKeccak256(['bytes'], [data]);
     await challenges.commitToChallenge(hashedData);
     const tx = await challenges.challengeCommitment(
       Transaction2InfoBlock,
@@ -882,7 +886,7 @@ describe('Challenges contract Challenges functions', function () {
 
     const receipt = await tx.wait();
 
-    const eventRollback = receipt.events.find(event => event.event === 'Rollback');
+    const eventRollback = receipt.logs.find(event => event.eventName === 'Rollback');
     const [blockNumberL2] = eventRollback.args;
 
     const unpackedBlockInfo = unpackBlockInfo(newTx.block.packedInfo);
@@ -908,7 +912,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      await state.getAddress(),
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -956,7 +960,7 @@ describe('Challenges contract Challenges functions', function () {
 
     // eslint-disable-next-line prefer-destructuring
     const data = (
-      await challenges.populateTransaction.challengeCommitment(
+      await challenges.challengeCommitment.populateTransaction(
         Transaction1InfoBlock,
         Transaction2InfoBlock,
         1,
@@ -964,7 +968,7 @@ describe('Challenges contract Challenges functions', function () {
         salt,
       )
     ).data;
-    const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+    const hashedData = ethers.solidityPackedKeccak256(['bytes'], [data]);
     await challenges.commitToChallenge(hashedData);
     await expect(
       challenges.challengeCommitment(Transaction1InfoBlock, Transaction2InfoBlock, 1, 1, salt),
@@ -990,7 +994,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      await state.getAddress(),
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -1026,7 +1030,7 @@ describe('Challenges contract Challenges functions', function () {
 
     // eslint-disable-next-line prefer-destructuring
     const data = (
-      await challenges.populateTransaction.challengeCommitment(
+      await challenges.challengeCommitment.populateTransaction(
         Transaction1InfoBlock,
         Transaction1InfoBlock,
         0,
@@ -1034,7 +1038,7 @@ describe('Challenges contract Challenges functions', function () {
         salt,
       )
     ).data;
-    const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+    const hashedData = ethers.solidityPackedKeccak256(['bytes'], [data]);
     await challenges.commitToChallenge(hashedData);
     await expect(
       challenges.challengeCommitment(Transaction1InfoBlock, Transaction1InfoBlock, 0, 0, salt),
@@ -1060,7 +1064,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      await state.getAddress(),
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -1108,7 +1112,7 @@ describe('Challenges contract Challenges functions', function () {
 
     // eslint-disable-next-line prefer-destructuring
     const data = (
-      await challenges.populateTransaction.challengeNullifier(
+      await challenges.challengeNullifier.populateTransaction(
         Transaction1InfoBlock,
         Transaction2InfoBlock,
         0,
@@ -1116,7 +1120,7 @@ describe('Challenges contract Challenges functions', function () {
         salt,
       )
     ).data;
-    const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+    const hashedData = ethers.solidityPackedKeccak256(['bytes'], [data]);
     await challenges.commitToChallenge(hashedData);
     const tx = await challenges.challengeNullifier(
       Transaction1InfoBlock,
@@ -1128,7 +1132,7 @@ describe('Challenges contract Challenges functions', function () {
 
     const receipt = await tx.wait();
 
-    const eventRollback = receipt.events.find(event => event.event === 'Rollback');
+    const eventRollback = receipt.logs.find(event => event.eventName === 'Rollback');
     const [blockNumberL2] = eventRollback.args;
 
     const unpackedBlockInfo = unpackBlockInfo(newTx.block.packedInfo);
@@ -1154,7 +1158,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      await state.getAddress(),
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -1190,7 +1194,7 @@ describe('Challenges contract Challenges functions', function () {
 
     // eslint-disable-next-line prefer-destructuring
     const data = (
-      await challenges.populateTransaction.challengeNullifier(
+      await challenges.challengeNullifier.populateTransaction(
         Transaction1InfoBlock,
         Transaction1InfoBlock,
         0,
@@ -1198,7 +1202,7 @@ describe('Challenges contract Challenges functions', function () {
         salt,
       )
     ).data;
-    const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+    const hashedData = ethers.solidityPackedKeccak256(['bytes'], [data]);
     await challenges.commitToChallenge(hashedData);
     await expect(
       challenges.challengeNullifier(Transaction1InfoBlock, Transaction1InfoBlock, 0, 0, salt),
@@ -1224,7 +1228,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      await state.getAddress(),
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -1248,11 +1252,11 @@ describe('Challenges contract Challenges functions', function () {
 
     const front = [];
     front.push('0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188');
-    const frontierBeforeBlock = front.concat(Array(32).fill(ethers.constants.HashZero));
+    const frontierBeforeBlock = front.concat(Array(32).fill(ethers.ZeroHash));
 
     // eslint-disable-next-line prefer-destructuring
     const data = (
-      await challenges.populateTransaction.challengeNewFrontierCorrect(
+      await challenges.challengeNewFrontierCorrect.populateTransaction(
         transactionsCreated.block,
         frontierBeforeBlock,
         newTx.block,
@@ -1260,7 +1264,7 @@ describe('Challenges contract Challenges functions', function () {
         salt,
       )
     ).data;
-    const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+    const hashedData = ethers.solidityPackedKeccak256(['bytes'], [data]);
     await challenges.commitToChallenge(hashedData);
 
     const tx = await challenges.challengeNewFrontierCorrect(
@@ -1271,7 +1275,7 @@ describe('Challenges contract Challenges functions', function () {
       salt,
     );
     const receipt = await tx.wait();
-    const eventRollback = receipt.events.find(event => event.event === 'Rollback');
+    const eventRollback = receipt.logs.find(event => event.eventName === 'Rollback');
     const [blockNumberL2] = eventRollback.args;
 
     const unpackedBlockInfo = unpackBlockInfo(newTx.block.packedInfo);
@@ -1297,7 +1301,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      await state.getAddress(),
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -1320,12 +1324,12 @@ describe('Challenges contract Challenges functions', function () {
     const salt = (await rand(32)).hex(32);
 
     const front = [];
-    front.push(ethers.constants.HashZero);
-    const frontierBeforeBlock = front.concat(Array(32).fill(ethers.constants.HashZero));
+    front.push(ethers.ZeroHash);
+    const frontierBeforeBlock = front.concat(Array(32).fill(ethers.ZeroHash));
 
     // eslint-disable-next-line prefer-destructuring
     const data = (
-      await challenges.populateTransaction.challengeNewFrontierCorrect(
+      await challenges.challengeNewFrontierCorrect.populateTransaction(
         transactionsCreated.block,
         frontierBeforeBlock,
         newTx.block,
@@ -1333,7 +1337,7 @@ describe('Challenges contract Challenges functions', function () {
         salt,
       )
     ).data;
-    const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+    const hashedData = ethers.solidityPackedKeccak256(['bytes'], [data]);
     await challenges.commitToChallenge(hashedData);
 
     await expect(
@@ -1366,7 +1370,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      await state.getAddress(),
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -1393,11 +1397,11 @@ describe('Challenges contract Challenges functions', function () {
 
     const front = [];
     front.push('0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188');
-    const frontierBeforeBlock = front.concat(Array(32).fill(ethers.constants.HashZero));
+    const frontierBeforeBlock = front.concat(Array(32).fill(ethers.ZeroHash));
 
     // eslint-disable-next-line prefer-destructuring
     const data = (
-      await challenges.populateTransaction.challengeNewFrontierCorrect(
+      await challenges.challengeNewFrontierCorrect.populateTransaction(
         transactionsCreated.block,
         frontierBeforeBlock,
         newTx.block,
@@ -1405,7 +1409,7 @@ describe('Challenges contract Challenges functions', function () {
         salt,
       )
     ).data;
-    const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+    const hashedData = ethers.solidityPackedKeccak256(['bytes'], [data]);
     await challenges.commitToChallenge(hashedData);
 
     await expect(
@@ -1438,7 +1442,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      await state.getAddress(),
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -1464,22 +1468,22 @@ describe('Challenges contract Challenges functions', function () {
 
     const front = [];
     front.push('0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188');
-    const frontierBeforeBlock = front.concat(Array(32).fill(ethers.constants.HashZero));
+    const frontierBeforeBlock = front.concat(Array(32).fill(ethers.ZeroHash));
 
     // eslint-disable-next-line prefer-destructuring
     const data = (
-      await challenges.populateTransaction.challengeNewRootCorrect(
+      await challenges.challengeNewRootCorrect.populateTransaction(
         frontierBeforeBlock,
         newTx.block,
         salt,
       )
     ).data;
-    const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+    const hashedData = ethers.solidityPackedKeccak256(['bytes'], [data]);
     await challenges.commitToChallenge(hashedData);
 
     const tx = await challenges.challengeNewRootCorrect(frontierBeforeBlock, newTx.block, salt);
     const receipt = await tx.wait();
-    const eventRollback = receipt.events.find(event => event.event === 'Rollback');
+    const eventRollback = receipt.logs.find(event => event.eventName === 'Rollback');
     const [blockNumberL2] = eventRollback.args;
 
     const unpackedBlockInfo = unpackBlockInfo(newTx.block.packedInfo);
@@ -1505,7 +1509,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      await state.getAddress(),
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -1531,17 +1535,17 @@ describe('Challenges contract Challenges functions', function () {
 
     const front = [];
     front.push('0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f20000');
-    const frontierBeforeBlock = front.concat(Array(32).fill(ethers.constants.HashZero));
+    const frontierBeforeBlock = front.concat(Array(32).fill(ethers.ZeroHash));
 
     // eslint-disable-next-line prefer-destructuring
     const data = (
-      await challenges.populateTransaction.challengeNewRootCorrect(
+      await challenges.challengeNewRootCorrect.populateTransaction(
         frontierBeforeBlock,
         newTx.block,
         salt,
       )
     ).data;
-    const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+    const hashedData = ethers.solidityPackedKeccak256(['bytes'], [data]);
     await challenges.commitToChallenge(hashedData);
 
     await expect(
@@ -1568,7 +1572,7 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setCommitmentHashEscrowed(
-      state.address,
+      await state.getAddress(),
       transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
@@ -1595,17 +1599,17 @@ describe('Challenges contract Challenges functions', function () {
 
     const front = [];
     front.push('0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188');
-    const frontierBeforeBlock = front.concat(Array(32).fill(ethers.constants.HashZero));
+    const frontierBeforeBlock = front.concat(Array(32).fill(ethers.ZeroHash));
 
     // eslint-disable-next-line prefer-destructuring
     const data = (
-      await challenges.populateTransaction.challengeNewRootCorrect(
+      await challenges.challengeNewRootCorrect.populateTransaction(
         frontierBeforeBlock,
         newTx.block,
         salt,
       )
     ).data;
-    const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+    const hashedData = ethers.solidityPackedKeccak256(['bytes'], [data]);
     await challenges.commitToChallenge(hashedData);
 
     await expect(

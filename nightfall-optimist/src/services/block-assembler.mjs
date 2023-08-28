@@ -160,6 +160,7 @@ export async function conditionalMakeBlock(proposer) {
         const end = transactionBatches[i];
 
         const transactions = mempoolTransactions.slice(start, end);
+        transactions.forEach(t => logger.debug(`t = ${JSON.stringify(t, null, 2)}`));
 
         makeNow = false; // reset the makeNow so we only make one block with a short number of transactions
 
@@ -175,7 +176,23 @@ export async function conditionalMakeBlock(proposer) {
           blockSize,
         });
 
-        // propose this block to the Shield contract here
+        logger.debug(
+          `Block.buildSolidityStruct(block) = ${JSON.stringify(
+            Block.buildSolidityStruct(block),
+            null,
+            2,
+          )}`,
+        );
+        transactions.forEach(t =>
+          logger.debug(
+            `Transaction.buildSolidityStruct(t) = ${JSON.stringify(
+              Transaction.buildSolidityStruct(t),
+              null,
+              2,
+            )}`,
+          ),
+        );
+        // propose this block to the State contract here
         const unsignedProposeBlockTransaction = await (
           await waitForContract(STATE_CONTRACT_NAME)
         ).methods

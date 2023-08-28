@@ -35,7 +35,7 @@ services:
       - rabbitmq
       - mongodb
     environment:
-      AUTHENTICATION_KEY: ${AUTHENTICATION_KEY}    
+      AUTHENTICATION_KEY: ${AUTHENTICATION_KEY}
       AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-600}
       BLOCKCHAIN_URL: ${BLOCKCHAIN_URL:?BLOCKCHAIN_URL-cannot-be-blank}
       CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST:-worker}
@@ -93,9 +93,9 @@ services:
       UPGRADE: ${UPGRADE_CONTRACTS}
       USDC_RESTRICT: ${USDC_RESTRICT}
       WHITELISTING: ${WHITELISTING?WHITELISTING-not-set}
-      
+
   mongodb:
-    image: mongo:4.4.1-bionic
+    image: mongo:7-jammy
     hostname: mongodb
     ports:
       - 27017:27017

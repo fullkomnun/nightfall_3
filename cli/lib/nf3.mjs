@@ -4,7 +4,7 @@
 
 import axios from 'axios';
 import Queue from 'queue';
-import Web3 from 'web3';
+import { Web3 } from 'web3';
 import WebSocket from 'ws';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import EventEmitter from 'events';
@@ -36,7 +36,10 @@ function ping(ws) {
 
 function createQueue(options) {
   const queue = new Queue(options);
-  queue.on('error', error => logger.error({ msg: 'Error caught by queue', error }));
+  queue.addEventListener('error', error => {
+    logger.error({ msg: 'Error caught by queue', err: error });
+    console.error(error);
+  });
 
   return queue;
 }
@@ -961,7 +964,7 @@ class Nf3 {
     */
   close() {
     this.intervalIDs.forEach(intervalID => clearInterval(intervalID));
-    this.web3.currentProvider.connection.close();
+    this.web3.currentProvider?.disconnect();
     this.websockets.forEach(websocket => websocket.close());
   }
 
@@ -1643,7 +1646,7 @@ class Nf3 {
     */
   getL1Balance(address) {
     return this.web3.eth.getBalance(address).then(function (balanceWei) {
-      return Web3.utils.fromWei(balanceWei);
+      return Web3.utils.fromWei(balanceWei, 'ether');
     });
   }
 

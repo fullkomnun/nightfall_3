@@ -29,15 +29,18 @@ function readNistVectors(filename) {
 describe('SHA512 tests', function () {
   let ShaInstance;
   let nistVectors;
+
   before(async () => {
     const ShaDeployer = await ethers.getContractFactory('Sha');
     ShaInstance = await ShaDeployer.deploy();
+    await ShaInstance.waitForDeployment();
     const nistVectorsShort = readNistVectors(
       'test/unit/utils/nist_test_vectors/SHA512ShortMsg.rsp',
     );
     const nistVectorsLong = readNistVectors('test/unit/utils/nist_test_vectors/SHA512LongMsg.rsp');
     nistVectors = [...nistVectorsShort, ...nistVectorsLong];
   });
+
   it('Should correctly compute the NIST test vectors < 32kb in size', async function () {
     // collect results asynchronously as this is a long test
     const checkResult = async test => {

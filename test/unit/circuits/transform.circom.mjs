@@ -7,7 +7,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const tester = circomTester.wasm;
-// const { expect } = chai;
 
 describe('Test tokenise circuit', function () {
   this.timeout(60000);

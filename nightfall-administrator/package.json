@@ -28,13 +28,13 @@
     "ethereumjs-util": "^7.1.5",
     "figlet": "^1.5.2",
     "inquirer": "^8.2.4",
-    "queue": "^6.0.2",
-    "web3": "^1.7.5",
+    "queue": "^7.0.0",
+    "web3": "^4.1.1",
     "yargs": "^17.5.1"
   },
   "overrides": {
-    "swarm-js": {
-      "got": "11.8.5"
+    "web3": {
+      "web3-validator": "1.0.2"
     }
   }
 }

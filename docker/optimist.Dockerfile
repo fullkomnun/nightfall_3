@@ -1,4 +1,9 @@
-FROM node:16.17-bullseye-slim
+# syntax=docker/dockerfile:1.2
+
+ARG NODE_VERSION
+ARG DEBIAN_RELEASE
+
+FROM node:${NODE_VERSION}-${DEBIAN_RELEASE}-slim as builder
 
 # 'node-gyp' requires 'python3', 'make' and 'g++''
 # entrypoint script requires 'netcat'

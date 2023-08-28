@@ -9,6 +9,9 @@ env:
   # Whitelisting is disabled during testing for backwards compatibility with these tests.  It must not be disabled in production.
   WHITELISTING: disable
 
+defaults:
+  timeout-minutes: 5
+
 jobs:
   dependency-review:
     runs-on: ubuntu-20.04
@@ -820,7 +823,7 @@ jobs:
             curl -i http://localhost:8092/healthcheck
           attempt_limit: 10
           attempt_delay: 30000
-      
+
       - name: 'Check challenger liveliness'
         uses: Wandalen/wretry.action@v1.0.36
         with:
@@ -847,7 +850,6 @@ jobs:
           path: |
             ./test-apps.log
             ./test-proposer.log
-
 
   periodic-payment-test:
     env:

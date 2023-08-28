@@ -112,6 +112,7 @@ DEFINED_SERVICES=$(docker-compose $FILE $DEV $ADVERSARY config --services)
 
 IFS=',' read -ra SERVICES_TO_START <<< "$NF_SERVICES_TO_START"
 
+# Filter out services that are not defined 
 SERVICES_TO_ACTUALLY_START=()
 for service in "${SERVICES_TO_START[@]}"; do
     if echo "$DEFINED_SERVICES" | grep -wq "$service"; then
@@ -120,4 +121,4 @@ for service in "${SERVICES_TO_START[@]}"; do
 done
 
 docker-compose $FILE $DEV $ADVERSARY -p 'nightfall_3' up -d --remove-orphans  "${SERVICES_TO_ACTUALLY_START[@]}"
-docker-compose -p 'nightfall_3' $FILE $DEV $ADVERSARY logs -f  "${SERVICES_TO_ACTUALLY_START[@]}"
+docker-compose -p 'nightfall_3' $FILE $DEV $ADVERSARY logs -f ${NF_SERVICES_TO_LOG//,/ }

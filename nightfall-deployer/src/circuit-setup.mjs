@@ -85,51 +85,48 @@ async function setupCircuits() {
   const oldCircuitHashes = [];
 
   // some or all of the vks will be undefined, so we need to run a trusted setup on these
-  for (let i = 0; i < vks.length; i++) {
+  const circuitHashPromises = vks.map((_vk, i) => {
     const circuit = circuitsToSetup[i];
 
     const fileBuffer = fs.readFileSync(`./circuits/${circuit}`);
     const hcircuit = `0x${crypto.createHash('md5').update(fileBuffer).digest('hex')}`;
     circuitHashes[i] = hcircuit.slice(0, 12);
 
-    const checkHash = await axios.post(
-      `${config.PROTOCOL}${config.CIRCOM_WORKER_HOST}/check-circuit-hash`,
-      {
+    return axios
+      .post(`${config.PROTOCOL}${config.CIRCOM_WORKER_HOST}/check-circuit-hash`, {
         filepath: circuit,
         hash: hcircuit,
-      },
-    );
+      })
+      .then(checkHash => {
+        if (checkHash.data.differentHash || !vks[i] || config.ALWAYS_DO_TRUSTED_SETUP) {
+          if (checkHash.data.differentHash && checkHash.data.previousHash) {
+            oldCircuitHashes.push(utils.ensure0x(checkHash.data.previousHash).slice(0, 12));
+          }
 
-    if (checkHash.data.differentHash || !vks[i] || config.ALWAYS_DO_TRUSTED_SETUP) {
-      try {
-        if (checkHash.data.differentHash && checkHash.data.previousHash) {
-          oldCircuitHashes.push(utils.ensure0x(checkHash.data.previousHash).slice(0, 12));
+          return axios
+            .post(`${config.PROTOCOL}${config.CIRCOM_WORKER_HOST}/generate-keys`, {
+              filepath: circuit,
+              curve: config.CURVE,
+              provingScheme: config.PROVING_SCHEME,
+              backend: config.BACKEND,
+            })
+            .then(res2 => {
+              vks[i] = res2.data.vk;
+            })
+            .catch(err => {
+              logger.error(err);
+            });
         }
         logger.info({
-          msg: 'No existing verification key. Fear not, I will make a new one: calling generate keys',
+          msg: 'Verification key exists: trusted setup skipped',
           circuit,
         });
-
-        const res2 = await axios.post(
-          `${config.PROTOCOL}${config.CIRCOM_WORKER_HOST}/generate-keys`,
-          {
-            filepath: circuit,
-            curve: config.CURVE,
-            provingScheme: config.PROVING_SCHEME,
-            backend: config.BACKEND,
-          },
-        );
-        vks[i] = res2.data.vk;
-      } catch (err) {
-        logger.error(err);
-      }
-    } else {
-      logger.info({
-        msg: 'Verification key exists: trusted setup skipped',
-        circuit,
+        return undefined;
       });
-    }
-  }
+  });
+
+  // Wait for all promises to resolve
+  await Promise.all(circuitHashPromises);
 
   logger.debug(`Getting key registry contract`);
   const keyRegistry = await waitForContract('State');

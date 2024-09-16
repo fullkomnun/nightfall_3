@@ -1,3 +1,4 @@
+/* eslint-disable no-use-before-define */
 import fs from 'fs';
 import path from 'path';
 import logger from 'common-files/utils/logger.mjs';
@@ -29,14 +30,7 @@ export default async function generateKeys({ filepath }) {
   const r1csInfo = await snarkjs.r1cs.info(`${outputPath}/${circuitDir}/${circuitName}.r1cs`);
   const power = Math.ceil(Math.log2(r1csInfo.nVars)).toString().padStart(2, '0');
 
-  // Download PowersOfTau from Hermez
-  if (!fs.existsSync(`${outputPath}/powersOfTau28_hez_final_${power}.ptau`)) {
-    logger.info(`Downloading powersOfTau with power ${power} from Hermez`);
-    await downloadFile(
-      `https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_${power}.ptau`,
-      `${outputPath}/powersOfTau28_hez_final_${power}.ptau`,
-    );
-  }
+  await downloadPowersOfTau(outputPath, power);
 
   logger.info('Generating keys...');
   await snarkjs.zKey.newZKey(
@@ -53,4 +47,27 @@ export default async function generateKeys({ filepath }) {
   logger.info('Key generation completed');
 
   return { vk, filepath };
+}
+
+const ongoingDownloads = new Map();
+
+async function downloadPowersOfTau(outputPath, power) {
+  const remotePath = `https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_${power}.ptau`;
+  if (ongoingDownloads.has(remotePath)) {
+    logger.info(`Awaiting ongoing download for: ${remotePath}`);
+    await ongoingDownloads.get(remotePath);
+    return;
+  }
+
+  const downloadPromise = downloadFile(
+    remotePath,
+    `${outputPath}/powersOfTau28_hez_final_${power}.ptau`,
+  );
+  ongoingDownloads.set(remotePath, downloadPromise);
+
+  try {
+    await downloadPromise;
+  } finally {
+    ongoingDownloads.delete(remotePath);
+  }
 }
